@@ -1,5 +1,4 @@
-JSPrelude
-=========
+# JSPrelude
 
 Note: This library is in alpha status. Do not use it in production yet.
 
