@@ -17,5 +17,5 @@ if (typeof exports === 'object' && typeof module !== 'undefined') {
 }
 
 if (typeof window === 'object' && window) {
-    window.mojo = module;
+    window.jsprelude = module;
 }
