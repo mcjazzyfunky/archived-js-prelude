@@ -1,11 +1,11 @@
 {
   "name": "jsprelude",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "BSD-3-Clause",
-  "homepage": "https://github.com/mcjazzyfunky/mojo-js",
+  "homepage": "https://github.com/mcjazzyfunky/jsprelude",
   "repository": {
       "type": "git",
-      "url": "https://github.com/mcjazzyfunky/mojo-js.git"
+      "url": "https://github.com/mcjazzyfunky/jsprelude.git"
   },
   "devDependencies": {
     "babel-polyfill": "^6.2.0",
@@ -26,5 +26,5 @@
     "immutable": "^3.7.4",
     "mocha": "^2.3.4"
   },
-  "main": "dist/latest/mojo.min.js"
+  "main": "dist/latest/jsprelude.min.js"
 }
