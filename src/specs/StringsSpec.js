@@ -2,7 +2,7 @@
 
 import {describe, it} from 'mocha';
 import {expect} from 'chai';
-import Strings from '../../src/module/Strings';
+import Strings from '../../src/main/Strings';
 
 /**
  * @test {String.trim}

@@ -2,7 +2,7 @@
 
 import {describe, it} from 'mocha';
 import {expect} from 'chai';
-import Seq from '../../src/module/Seq';
+import Seq from '../../src/main/Seq';
 
 /**
  * @test {Seq}

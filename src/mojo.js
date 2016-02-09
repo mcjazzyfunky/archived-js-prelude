@@ -1,8 +1,8 @@
-import Objects from './module/Objects';
-import Strings from './module/Strings';
-import Arrays from './module/Arrays';
-import Seq from './module/Seq';
-import Reader from './module/Reader'
+import Objects from './main/Objects';
+import Strings from './main/Strings';
+import Arrays from './main/Arrays';
+import Seq from './main/Seq';
+import Reader from './main/Reader'
 
 const module = { Objects, Strings, Arrays, Seq, Reader };
 

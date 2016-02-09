@@ -3,7 +3,7 @@ module.exports = function (grunt) {
         pkg: grunt.file.readJSON('package.json'),
         clean: {
             build: {
-                src: ["build/*", "dist/v<%= pkg.version %>"],
+                src: ["build/*", "dist/latest", "dist/v<%= pkg.version %>"],
             }
         },
         babel: {
@@ -22,13 +22,6 @@ module.exports = function (grunt) {
                     src: ['**/*.js'],
                     dest: 'build/src',
                     ext: '.js'
-                },
-                {
-                    expand: true,
-                    cwd: 'specs',
-                    src: ['**/*.js'],
-                    dest: 'build/specs',
-                    ext: '.js'
                 }]
             }
         },
@@ -37,24 +30,22 @@ module.exports = function (grunt) {
                 options: {
                     reporter: 'spec',
                     require: [
-                        //'node_modules/grunt-babel/node_modules/babel-core/node_modules/regenerator/runtime.js'
                         'node_modules/babel-polyfill/dist/polyfill.min.js'
                     ],
                     bail: true
                 },
-                src: ['build/specs/**/*.js']
+                src: ['build/src/specs/**/*.js']
             }
         },
         esdoc : {
             dist : {
                 options: {
-                    source: 'src/module/',
+                    source: 'src/main/',
                     destination: 'dist/v<%= pkg.version %>/docs/api',
-                    //autoPrivate: false,
                     title: 'mojo.js',
                     test: {
                         type: 'mocha',
-                        source: './specs',
+                        source: './src/specs',
                         includes: ['\\Spec.js']
                     }
                 }
@@ -62,8 +53,6 @@ module.exports = function (grunt) {
         },
         browserify: {
             js: {
-                //extend: true,
-                //src: ['build/src/**/*.js'],
                 src: 'build/src/mojo.js',
                 dest: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.js'
             }
@@ -80,27 +69,54 @@ module.exports = function (grunt) {
             },
             js: {
                 src: ['dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.js'],
-                dest: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.js'
+                dest: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.min.js'
             }
         },
         compress: {
             main: {
                 options: {
-                    mode: 'gzip'
+                    mode: 'gzip',
+                    level: 9
                 },
                 files: [{
-                    src: ['dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.js'],
-                    dest: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.js.gz'
+                    src: ['dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.min.js'],
+                    dest: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.min.js.gz'
                 }, {
-                    src: ['dist/v<%= pkg.version %>/polyfill.min.js'],
+                    src: ['node_modules/babel-polyfill/dist/polyfill.min.js'],
                     dest: 'dist/v<%= pkg.version %>/polyfill.min.js.gz'
                 }]
             }
         },
         copy: {
-            dist: {
+            mojo1: {
+                src: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.js',
+                dest: 'dist/latest/mojo.js'
+            },
+            mojo2: {
+                src: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.min.js',
+                dest: 'dist/latest/mojo.min.js'
+            },
+            mojo3: {
+                src: 'dist/v<%= pkg.version %>/mojo-<%= pkg.version %>.min.js.gz',
+                dest: 'dist/latest/mojo.min.js.gz'
+            },
+            polyfill1: {
                 src: 'node_modules/babel-polyfill/dist/polyfill.min.js',
                 dest: 'dist/v<%= pkg.version %>/polyfill.min.js'
+            },
+            polyfill2: {
+                src: 'node_modules/babel-polyfill/dist/polyfill.min.js',
+                dest: 'dist/latest/polyfill.min.js'
+            },
+            polyfill3: {
+                src: 'dist/v<%= pkg.version %>/polyfill.min.js.gz',
+                dest: 'dist/latest/polyfill.min.js.gz'
+            },
+            docs: {
+                cwd: 'dist/v<%= pkg.version %>/docs',
+                src: '**',
+                dest: 'dist/latest/docs/',
+                expand: true
             }
         },
         watch: {
@@ -108,7 +124,7 @@ module.exports = function (grunt) {
                 options: {
                     spawn: true,
                 },
-                files: ['src/**/*.js', 'specs/**/*.js'],
+                files: ['src/**/*.js'],
                  tasks: ['compile', 'mochaTest']
                 //tasks: ['esdoc']
             }
@@ -120,8 +136,6 @@ module.exports = function (grunt) {
     // run the tests from that file. Otherwise run all the tests
     grunt.event.on('watch', function (action, filePath) {
         if (filePath.match('^src/')) {
-            grunt.config.set(['mochaTest', 'test', 'src'], 'build/specs/**/*.js');
-        } else if (filePath.match('^specs/')) {
             grunt.config.set(['mochaTest', 'test', 'src'], 'build/' + filePath);
         }
     });
@@ -138,7 +152,7 @@ module.exports = function (grunt) {
 
     grunt.registerTask('compile', ['babel']);
     grunt.registerTask('test', ['babel', 'mochaTest']);
-    grunt.registerTask('doc', ['babel', "mochaTest", 'esdoc']);
-    grunt.registerTask('dist', ['clean', "babel", "mochaTest", 'esdoc', 'browserify', 'uglify', 'copy', 'compress']);
+    grunt.registerTask('doc', ['babel', 'mochaTest', 'esdoc']);
+    grunt.registerTask('dist', ['clean', 'babel', 'mochaTest', 'esdoc', 'browserify', 'uglify', 'compress', 'copy']);
     grunt.registerTask('default', ['dist']);
 };

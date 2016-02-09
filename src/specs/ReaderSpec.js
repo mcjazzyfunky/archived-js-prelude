@@ -2,7 +2,7 @@
 
 import {describe, it} from 'mocha';
 import {expect} from 'chai';
-import Reader from '../../src/module/Reader';
+import Reader from '../../src/main/Reader';
 
 /**
  * @test {Reader}

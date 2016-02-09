@@ -2,7 +2,7 @@
 
 import {describe, it} from 'mocha';
 import {expect} from 'chai';
-import Arrays from '../../src/module/Arrays';
+import Arrays from '../../src/main/Arrays';
 
 /**
  * @test {Arrays.selectValue}
