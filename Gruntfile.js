@@ -42,7 +42,7 @@ module.exports = function (grunt) {
                 options: {
                     source: 'src/main/',
                     destination: 'dist/v<%= pkg.version %>/docs/api',
-                    title: 'JSPrelude',
+                    title: 'js-prelude',
                     test: {
                         type: 'mocha',
                         source: './src/specs',
@@ -53,8 +53,8 @@ module.exports = function (grunt) {
         },
         browserify: {
             js: {
-                src: 'build/src/jsprelude.js',
-                dest: 'dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.js'
+                src: 'build/src/js-prelude.js',
+                dest: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.js'
             }
         },
         uglify: {
@@ -68,8 +68,8 @@ module.exports = function (grunt) {
                         + '*/\n'
             },
             js: {
-                src: ['dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.js'],
-                dest: 'dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.min.js'
+                src: ['dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.js'],
+                dest: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js'
             }
         },
         compress: {
@@ -79,8 +79,8 @@ module.exports = function (grunt) {
                     level: 9
                 },
                 files: [{
-                    src: ['dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.min.js'],
-                    dest: 'dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.min.js.gz'
+                    src: ['dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js'],
+                    dest: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js.gz'
                 }, {
                     src: ['node_modules/babel-polyfill/dist/polyfill.min.js'],
                     dest: 'dist/v<%= pkg.version %>/polyfill.min.js.gz'
@@ -89,16 +89,16 @@ module.exports = function (grunt) {
         },
         copy: {
             jsprelude1: {
-                src: 'dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.js',
-                dest: 'dist/latest/jsprelude.js'
+                src: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.js',
+                dest: 'dist/latest/js-prelude.js'
             },
             jsprelude2: {
-                src: 'dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.min.js',
-                dest: 'dist/latest/jsprelude.min.js'
+                src: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js',
+                dest: 'dist/latest/js-prelude.min.js'
             },
             jsprelude3: {
-                src: 'dist/v<%= pkg.version %>/jsprelude-<%= pkg.version %>.min.js.gz',
-                dest: 'dist/latest/jsprelude.min.js.gz'
+                src: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js.gz',
+                dest: 'dist/latest/js-prelude.min.js.gz'
             },
             polyfill1: {
                 src: 'node_modules/babel-polyfill/dist/polyfill.min.js',
