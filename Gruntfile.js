@@ -3,7 +3,7 @@ module.exports = function (grunt) {
         pkg: grunt.file.readJSON('package.json'),
         clean: {
             build: {
-                src: ["build/*", "dist/latest", "dist/v<%= pkg.version %>"],
+                src: ['build/*', 'dist/latest', 'dist/v<%= pkg.version %>'],
             }
         },
         babel: {
@@ -22,6 +22,12 @@ module.exports = function (grunt) {
                     src: ['**/*.js'],
                     dest: 'build/src',
                     ext: '.js'
+                }]
+            },
+            index: {
+                files: [{
+                    src: 'index.js',
+                    dest: 'build/index.js'
                 }]
             }
         },
@@ -53,7 +59,7 @@ module.exports = function (grunt) {
         },
         browserify: {
             js: {
-                src: 'build/src/js-prelude.js',
+                src: 'build/index.js',
                 dest: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.js'
             }
         },

@@ -1,7 +1,7 @@
 'use strict';
 
-import Objects from './Objects';
-import Seq from './Seq';
+import Objects from './Objects.js';
+import Seq from './Seq.js';
 
 export default class Reader extends Seq {
     constructor(data) {

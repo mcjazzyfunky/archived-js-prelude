@@ -1,6 +1,6 @@
 'use strict';
 
-import Objects from './Objects';
+import Objects from './Objects.js';
 
 export default class Strings {
     /**

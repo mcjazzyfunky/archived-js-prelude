@@ -1,7 +1,7 @@
 'use strict';
 
-import Seq from './Seq';
-import Reader from './Reader';
+import Seq from './Seq.js';
+import Reader from './Reader.js';
 
 /**
  * Utility class with static helper functions to be used with any value - mainly objects.
