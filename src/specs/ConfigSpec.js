@@ -16,12 +16,14 @@ const config = new Config({
     number1: 123.45,
     integer1: 42,
     object1: {x: 11, y: 22},
+    array1: [1, 2, 3],
     
     nested: {
         string: 'ghi',
         boolean: true,
         number: 234.56,
-        integer: 4242
+        integer: 4242,
+        array: [11, 22, 33]
     }
 });
 
@@ -156,5 +158,19 @@ describe('Testing method Config:getObject', () => {
 
         expect(config.getObject('unknown', {a: 33}))
             .to.eql({a: 33});
+    });
+});
+
+
+/**
+ * @test {Config#getArray}
+ */
+describe('Testing method Config:getArray', () => {
+    it('should read array properly', () => {
+        expect(config.getArray('array1'))
+            .to.eql([1, 2, 3]);
+
+        expect(config.getArray('unknown', [33]))
+            .to.eql([33]);
     });
 });

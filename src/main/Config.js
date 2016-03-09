@@ -153,6 +153,14 @@ export default class Config {
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
     
+    getArray(path, defaultValue) {
+        const
+            rule = 'must be an array',
+            validator = Array.isArray;
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator);
+    }
+    
     getConfig(path) {
         const
             rule = 'must be an object or undefined or null',
