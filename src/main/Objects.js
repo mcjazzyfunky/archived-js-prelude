@@ -1,7 +1,6 @@
 'use strict';
 
 import Seq from './Seq.js';
-import Reader from './Reader.js';
 
 /**
  * Utility class with static helper functions to be used with any value - mainly objects.
@@ -358,11 +357,7 @@ export default class Objects {
         }
 
         try {
-            if (obj instanceof Reader) {
-                ret = new Reader(Transformer.transform(obj.__data, transformationPlan));
-            } else {
-                ret = Transformer.transform(obj, transformationPlan);
-            }
+            ret = Transformer.transform(obj, transformationPlan);
         } catch (errorMsg) {
             if (typeof errorMsg === 'string') {
                 throw new TypeError('[Objects.transform] ' + errorMsg);
@@ -378,15 +373,7 @@ export default class Objects {
 
 class Transformer {
     static transform(obj, plan) {
-        var ret;
-
-        if (obj instanceof Reader) {
-            ret = obj.transform(plan);
-        } else {
-            ret = Transformer.__transformPlainJS(obj, plan);
-        }
-
-        return ret;
+        return Transformer.__transformPlainJS(obj, plan);
     }
 
     static __transformPlainJS(obj, plan) {

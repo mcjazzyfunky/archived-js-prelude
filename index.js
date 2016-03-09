@@ -2,14 +2,14 @@ import Objects from './src/main/Objects.js';
 import Strings from './src/main/Strings.js';
 import Arrays from './src/main/Arrays.js';
 import Seq from './src/main/Seq.js';
-import Reader from './src/main/Reader.js'
+import Config from './src/main/Config.js'
 
 export {
     Objects,
     Strings,
     Arrays,
     Seq,
-    Reader
+    Config
 };
 
 const jsprelude = {
@@ -17,7 +17,7 @@ const jsprelude = {
     Strings,
     Arrays,
     Seq,
-    Reader
+    Config
 };
 
 if (typeof define === 'function' && define.amd) {
