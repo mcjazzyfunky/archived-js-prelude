@@ -140,10 +140,20 @@ export default class Config {
                 typeof value === 'string' && value.match(regex);
 
         return this.getConstrainedValue(path, defaultValue, rule, validator);
-    };
+    }
 
     getStringMatchingRegexOrNull(path, regex) {
         return this.getStringMatchingRegex(path, null)|| null;
+    }
+    
+    getObject(path, defaultValue) {
+        const
+            rule = 'must be an object',
+
+            validator = value =>
+                value !== null && typeof value === 'object';
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
     
     getConfig(path) {

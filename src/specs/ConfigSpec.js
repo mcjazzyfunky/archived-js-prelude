@@ -15,6 +15,7 @@ const config = new Config({
     boolean2: false,
     number1: 123.45,
     integer1: 42,
+    object1: {x: 11, y: 22},
     
     nested: {
         string: 'ghi',
@@ -142,5 +143,18 @@ describe('Testing method Config:getStringOrNull', () => {
 
         expect(config.getStringOrNull('unknown'))
             .to.eql(null);
+    });
+});
+
+/**
+ * @test {Config#getObject}
+ */
+describe('Testing method Config:getObject', () => {
+    it('should read objects properly', () => {
+        expect(config.getObject('object1'))
+            .to.eql({x: 11, y: 22});
+
+        expect(config.getObject('unknown', {a: 33}))
+            .to.eql({a: 33});
     });
 });
