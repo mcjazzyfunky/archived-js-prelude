@@ -32,16 +32,37 @@ export default class Config {
     }
 
     get(path, defaultValue = undefined) {
-        const
-            pathIsString = typeof path === 'string',
-            pathIsArray = (!pathIsString && Array.isArray(path));
-            
-        if (!pathIsString &&  !pathIsArray) {
+        let ret;
+    
+        if (typeof path === 'string') {
+            ret = this.__data[path];
+        } else if (!Array.isArray(path)) {
             throw new TypeError(
                 `[Config:get] First parameter 'path' has to be a string or an array (invalid path: ${path})`);
-        }
-        
-        let ret = Objects.getIn(this.__data, pathIsArray ? path : [path]);
+        } else {
+            const
+                pathLength = path.length;
+    
+            if (pathLength === 0) {
+                ret = this.__data;
+            } else if (pathLength === 1) {
+                ret = this.__data[path[0]];
+            } else {
+                let parent = this.__data;
+    
+                for (let i = 0; i < pathLength; ++i) {
+                    if (!parent) {
+                        break;
+                    } else {
+                        parent = parent[path[i]];
+    
+                        if (i === pathLength - 1) {
+                            ret = parent;
+                        }
+                    }
+                }
+            }
+        }       
         
         if (ret === undefined) {
             if (defaultValue !== undefined) {
@@ -50,7 +71,7 @@ export default class Config {
                 throw errorMissingValue(this, path);
             }
         }
-        
+
         return ret;
     }
     
