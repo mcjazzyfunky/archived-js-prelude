@@ -3,7 +3,7 @@ module.exports = function (grunt) {
         pkg: grunt.file.readJSON('package.json'),
         clean: {
             build: {
-                src: ['build/*', 'dist/latest', 'dist/v<%= pkg.version %>'],
+                src: ['build/*', 'dist/js-prelude', 'dist/v<%= pkg.version %>'],
             }
         },
         babel: {
@@ -90,15 +90,15 @@ module.exports = function (grunt) {
         copy: {
             jsprelude1: {
                 src: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.js',
-                dest: 'dist/latest/js-prelude.js'
+                dest: 'dist/js-prelude/js-prelude.js'
             },
             jsprelude2: {
                 src: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js',
-                dest: 'dist/latest/js-prelude.min.js'
+                dest: 'dist/js-prelude/js-prelude.min.js'
             },
             jsprelude3: {
                 src: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.min.js.gz',
-                dest: 'dist/latest/js-prelude.min.js.gz'
+                dest: 'dist/js-prelude/js-prelude.min.js.gz'
             },
             polyfill1: {
                 src: 'node_modules/babel-polyfill/dist/polyfill.min.js',
@@ -106,16 +106,16 @@ module.exports = function (grunt) {
             },
             polyfill2: {
                 src: 'node_modules/babel-polyfill/dist/polyfill.min.js',
-                dest: 'dist/latest/polyfill.min.js'
+                dest: 'dist/js-prelude/polyfill.min.js'
             },
             polyfill3: {
                 src: 'dist/v<%= pkg.version %>/polyfill.min.js.gz',
-                dest: 'dist/latest/polyfill.min.js.gz'
+                dest: 'dist/js-prelude/polyfill.min.js.gz'
             },
             docs: {
                 cwd: 'dist/v<%= pkg.version %>/docs',
                 src: '**',
-                dest: 'dist/latest/docs/',
+                dest: 'dist/js-prelude/docs/',
                 expand: true
             }
         },
