@@ -4,10 +4,10 @@ import Objects from './Objects.js';
 import Seq from './Seq.js';
 
 export default class Config {
-    constructor(obj, config) { 
-        if (obj === null || typeof obj !== 'object') {
+    constructor(data, config) { 
+        if (data === null || typeof data !== 'object') {
             throw new TypeError(
-                "[Config.constructor] First argument 'obj' has to be an object");
+                "[Config.constructor] First argument 'data' has to be an object");
         } else if (
             config
             && config.rootPath !== undefined
@@ -24,12 +24,9 @@ export default class Config {
             
             throw new TypeError("[Config.constructor] Property 'contextName' of second argument 'config' "
                 + 'has to be a string or undefined or null');
-        } else if (obj instanceof Config) {
-            obj = obj.__Config;
-        } else {
-            this.__Config = obj;
         }
-
+        
+        this.__data = data;
         this.__rootPath = (config && config.rootPath) || null;
         this.__contextName = (config && config.contextName) || null;
     }
@@ -44,7 +41,7 @@ export default class Config {
                 `[Config:get] First parameter 'path' has to be a string or an array (invalid path: ${path})`);
         }
         
-        let ret = Objects.getIn(this.__Config, pathIsArray ? path : [path]);
+        let ret = Objects.getIn(this.__data, pathIsArray ? path : [path]);
         
         if (ret === undefined) {
             if (defaultValue !== undefined) {
