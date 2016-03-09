@@ -11,7 +11,7 @@ export default class Config {
         } else if (
             options
             && options.rootPath !== undefined
-            && options.rootPath !== null && !Array.isArray(config.rootPath)) {
+            && options.rootPath !== null && !Array.isArray(options.rootPath)) {
             
             throw new TypeError(
                 "[Config.constructor] Property 'rootPath' of second argument "
