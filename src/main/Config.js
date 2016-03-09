@@ -4,31 +4,31 @@ import Objects from './Objects.js';
 import Seq from './Seq.js';
 
 export default class Config {
-    constructor(data, config) { 
+    constructor(data, options) { 
         if (data === null || typeof data !== 'object') {
             throw new TypeError(
                 "[Config.constructor] First argument 'data' has to be an object");
         } else if (
-            config
-            && config.rootPath !== undefined
-            && config.rootPath !== null && !Array.isArray(config.rootPath)) {
+            options
+            && options.rootPath !== undefined
+            && options.rootPath !== null && !Array.isArray(config.rootPath)) {
             
             throw new TypeError(
                 "[Config.constructor] Property 'rootPath' of second argument "
                 + "'config' has to be an array or undefined or null");
         } else if (
-            config 
-            && config.contextName !== undefined
-            && config.contextName !== null
-            && typeof config.contextName !== 'string') {
+            options 
+            && options.contextName !== undefined
+            && options.contextName !== null
+            && typeof options.contextName !== 'string') {
             
             throw new TypeError("[Config.constructor] Property 'contextName' of second argument 'config' "
                 + 'has to be a string or undefined or null');
         }
         
         this.__data = data;
-        this.__rootPath = (config && config.rootPath) || null;
-        this.__contextName = (config && config.contextName) || null;
+        this.__rootPath = (options && options.rootPath) || null;
+        this.__contextName = (options && options.contextName) || null;
     }
 
     get(path, defaultValue = undefined) {
@@ -182,11 +182,11 @@ export default class Config {
 }
 
 
-function error(Config, path, message) {
+function error(config, path, message) {
     const
         messagePrefix =
-            Config.contextName
-            ? Config.contextName + ': '
+            config.__contextName
+            ? config.__contextName + ': '
             : '',
     
         escapeKey = token =>
@@ -206,17 +206,17 @@ function error(Config, path, message) {
     return new Error(`${messagePrefix}Erroneous attribute '${pathInfo}' (${message})`);
 }
 
-function errorMissingValue(Config, path) {
-    return error(this, path, 'Mandatory value not available');
+function errorMissingValue(config, path) {
+    return error(config, path, 'Mandatory value not available');
 }
 
 // @throws Error
-function getConstrainedValue(Config, path, defaultValue = undefined, rule = null, validator = null, converter = null) {
+function getConstrainedValue(config, path, defaultValue = undefined, rule = null, validator = null, converter = null) {
     // Parameters are fine - no need to validate them
     
     let ret;
     
-    const value = Config.get(path, defaultValue);
+    const value = config.get(path, defaultValue);
         
     if (value === defaultValue) {
         ret = defaultValue;
