@@ -27,7 +27,7 @@ const config = new Config({
     }
 });
 
-describe('Testing method Config:getBoolean', () => {
+describe('Testing method Config#getBoolean', () => {
     it('should read boolean values properly', () => {
             
         expect(config.getBoolean('boolean1'))
@@ -39,7 +39,7 @@ describe('Testing method Config:getBoolean', () => {
     });
 });
 
-describe('Testing method Config:getBoolean', () => {
+describe('Testing method Config#getBoolean', () => {
     it('should read boolean values properly', () => {
             
         expect(config.getBoolean('boolean1'))
@@ -59,7 +59,7 @@ describe('Testing method Config:getBoolean', () => {
     });
 });
 
-describe('Testing method Config:getNumber', () => {
+describe('Testing method Config#getNumber', () => {
     it('should read numeric values properly', () => {
         expect(config.getNumber('number1'))
             .to.eql(123.45);
@@ -78,7 +78,7 @@ describe('Testing method Config:getNumber', () => {
     });
 });
 
-describe('Testing method Config:getInteger', () => {
+describe('Testing method Config#getInteger', () => {
     it('should read integer values properly', () => {
         expect(config.getInteger('number1'))
             .to.eql(123);
@@ -100,7 +100,7 @@ describe('Testing method Config:getInteger', () => {
 /**
  * @test {Config#getString}
  */
-describe('Testing method Config:getString', () => {
+describe('Testing method Config#getString', () => {
     it('should read strings properly', () => {
         expect(config.getString('string1'))
             .to.eql('abc');
@@ -126,7 +126,7 @@ describe('Testing method Config:getString', () => {
 /**
  * @test {Config#getStringOrNull}
  */
-describe('Testing method Config:getStringOrNull', () => {
+describe('Testing method Config#getStringOrNull', () => {
     it('should read strings properly and handle null values correctly', () => {
         expect(config.getStringOrNull('string1'))
             .to.eql('abc');
@@ -151,7 +151,7 @@ describe('Testing method Config:getStringOrNull', () => {
 /**
  * @test {Config#getObject}
  */
-describe('Testing method Config:getObject', () => {
+describe('Testing method Config#getObject', () => {
     it('should read objects properly', () => {
         expect(config.getObject('object1'))
             .to.eql({x: 11, y: 22});
@@ -165,7 +165,7 @@ describe('Testing method Config:getObject', () => {
 /**
  * @test {Config#getArray}
  */
-describe('Testing method Config:getArray', () => {
+describe('Testing method Config#getArray', () => {
     it('should read array properly', () => {
         expect(config.getArray('array1'))
             .to.eql([1, 2, 3]);
