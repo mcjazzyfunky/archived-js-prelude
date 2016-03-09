@@ -1,8 +1,8 @@
-import Objects from './src/main/Objects.js';
-import Strings from './src/main/Strings.js';
-import Arrays from './src/main/Arrays.js';
-import Seq from './src/main/Seq.js';
-import Config from './src/main/Config.js'
+import Objects from './main/Objects.js';
+import Strings from './main/Strings.js';
+import Arrays from './main/Arrays.js';
+import Seq from './main/Seq.js';
+import Config from './main/Config.js'
 
 export {
     Objects,

@@ -23,12 +23,6 @@ module.exports = function (grunt) {
                     dest: 'build/src',
                     ext: '.js'
                 }]
-            },
-            index: {
-                files: [{
-                    src: 'index.js',
-                    dest: 'build/index.js'
-                }]
             }
         },
         mochaTest: {
@@ -59,7 +53,7 @@ module.exports = function (grunt) {
         },
         browserify: {
             js: {
-                src: 'build/index.js',
+                src: 'build/src/js-prelude.js',
                 dest: 'dist/v<%= pkg.version %>/js-prelude-<%= pkg.version %>.js'
             }
         },
