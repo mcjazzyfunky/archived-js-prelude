@@ -174,3 +174,13 @@ describe('Testing method Config#getArray', () => {
             .to.eql([33]);
     });
 });
+
+/**
+ * @test {Config#keys}
+ */
+describe('Testing method Config#keys', () => {
+    it('should read keys properly', () => {
+        expect(new Config({a: 1, b: 2, c: 3}).keys())
+            .to.eql(['a', 'b', 'c']);
+    });
+});

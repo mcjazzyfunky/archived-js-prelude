@@ -190,6 +190,10 @@ export default class Config {
 
         return getConstrainedValue(this, path, null, rule, validator, converter);
     }
+    
+    keys() {
+        return Object.keys(this.__data);
+    }
 
     toString() {
         return '<instance of Config>';
