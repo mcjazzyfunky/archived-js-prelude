@@ -1,7 +1,8 @@
 'use strict';
 
-import Strings from './Strings.js';
-import Seq from './Seq.js';
+import ConfigError from './ConfigError';
+import Strings from './Strings';
+import Seq from './Seq';
 
 const dummyDefaultValue = {};
 
@@ -146,8 +147,21 @@ export default class Config {
     getTrimmedStringOrNull(path) {
         return this.getTrimmedString(path, null) || null;
     };
+    
+    getNonBlankString(path, defaultValue) {
+        const
+            rule = 'must be non-blank string',
+            
+            validator = value => {
+                const type = typeof value;
+                
+                return type === 'string' && value.trim() !== '' || type === 'boolean' || type === 'number';
+            };
+            
+        return getConstrainedValue(this, path, defaultValue, rule, validator);
+    }
 
-    getStringMatchingRegex(path, regex, defaultValue) {
+    getStringMatchingRegex(regex, path, defaultValue) {
         if (!(regex instanceof RegExp)) {
             throw new TypeError(
                 "[Config:getStringMatchingRegex] Second argument 'regex' must be a regular expression");
@@ -159,13 +173,17 @@ export default class Config {
             validator = value =>
                 typeof value === 'string' && value.match(regex);
 
-        return this.getConstrainedValue(path, defaultValue, rule, validator);
-    }
-
-    getStringMatchingRegexOrNull(path, regex) {
-        return this.getStringMatchingRegex(path, null)|| null;
+        return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
     
+    getFunction(path, defaultValue) {
+        const
+            rule = 'must be a function',
+            validator = value => typeof value === 'function';
+        
+        return getConstrainedValue(this, path, defaultValue, rule, validator);
+    }
+
     getObject(path, defaultValue) {
         const
             rule = 'must be an object',
@@ -311,7 +329,7 @@ function error(config, path, message) {
         pathInfo = path.map(escapeKey).join('|');
     }
 
-    return new Error(`${messagePrefix}Erroneous attribute '${pathInfo}' (${message})`);
+    return new ConfigError(`${messagePrefix}Erroneous attribute '${pathInfo}' (${message})`);
 }
 
 function errorMissingValue(config, path) {

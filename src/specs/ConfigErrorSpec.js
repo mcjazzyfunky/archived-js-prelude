@@ -2,5 +2,5 @@
 
 import {describe, it} from 'mocha';
 import {expect} from 'chai';
-import ConfigError from '../../src/main/ConfigError';
+import Objects from '../../src/main/Objects';
 

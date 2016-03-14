@@ -4,6 +4,7 @@ import Arrays from './main/Arrays';
 import Types from './main/Types'
 import Seq from './main/Seq';
 import Config from './main/Config'
+import ConfigError from './main/ConfigError'
 
 export {
     Objects,
@@ -11,7 +12,8 @@ export {
     Arrays,
     Types,
     Seq,
-    Config
+    Config,
+    ConfigError
 };
 
 const jsprelude = {
@@ -20,7 +22,8 @@ const jsprelude = {
     Arrays,
     Types,
     Seq,
-    Config
+    Config,
+    ConfigError
 };
 
 if (typeof define === 'function' && define.amd) {

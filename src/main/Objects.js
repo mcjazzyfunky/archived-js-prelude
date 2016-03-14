@@ -1,7 +1,5 @@
 'use strict';
 
-import Seq from './Seq.js';
-
 /**
  * Utility class with static helper functions to be used with any value - mainly objects.
  */
