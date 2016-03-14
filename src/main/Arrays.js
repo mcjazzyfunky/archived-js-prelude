@@ -19,7 +19,7 @@ export default class Arrays {
      * @ignore
      */
     static toString() {
-        return '<utility class Arrays>';
+        return 'Arrays/class';
     }
 
     /**

@@ -1,13 +1,15 @@
-import Objects from './main/Objects.js';
-import Strings from './main/Strings.js';
-import Arrays from './main/Arrays.js';
-import Seq from './main/Seq.js';
-import Config from './main/Config.js'
+import Objects from './main/Objects';
+import Strings from './main/Strings';
+import Arrays from './main/Arrays';
+import Types from './main/Types'
+import Seq from './main/Seq';
+import Config from './main/Config'
 
 export {
     Objects,
     Strings,
     Arrays,
+    Types,
     Seq,
     Config
 };
@@ -16,6 +18,7 @@ const jsprelude = {
     Objects,
     Strings,
     Arrays,
+    Types,
     Seq,
     Config
 };

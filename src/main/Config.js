@@ -1,7 +1,9 @@
 'use strict';
 
-import Objects from './Objects.js';
+import Strings from './Strings.js';
 import Seq from './Seq.js';
+
+const dummyDefaultValue = {};
 
 export default class Config {
     constructor(data, options) { 
@@ -128,7 +130,7 @@ export default class Config {
         const
             rule = 'must be a string',
             validator = value => value === null || typeof value !== 'object',
-            converter = value => Objects.asString(value);
+            converter = value => Strings.asString(value);
 
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     };
@@ -181,6 +183,25 @@ export default class Config {
 
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
+  
+    getSeq(path, defaultValue) {
+        const
+            rule = 'must be a sequable',
+            validator = Seq.isSeqable,
+            converter = Seq.from;
+            
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
+    }
+    
+    getNonStringSeq(path, defaultValue) {
+        const
+            rule = 'must be a non-string sequable',
+            validator = Seq.isNonStringSeqable,
+            converter = Seq.from;
+            
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
+        
+    }
     
     getConfig(path) {
         const
@@ -191,12 +212,66 @@ export default class Config {
         return getConstrainedValue(this, path, null, rule, validator, converter);
     }
     
+    isSomething(path) {
+        const value = this.get(path, null);
+        
+        return (value !== null);
+    }
+    
+    isNothing(path) {
+        const value = this.get(path, null);
+        
+        return (value === null);
+    }
+    
+    isFunction(path) {
+        const value = this.get(path, null);
+        
+        return typeof value === 'function';
+    }
+    
+    isObject(path) {
+        const value = this.get(path, null);
+        
+        return !!value && typeof value === 'object';
+    }
+    
+    isArray(path) {
+        const value = this.get(path, null);
+        
+        return Array.isArray(value);
+    }
+    
+    isScalar(path) {
+        const
+            value = this.get(path, null),
+            type = typeof value;
+        
+        return (type === 'string' || type === 'number' || type === 'boolean');
+    }
+    
+    isScalarOrNull(path) {
+        const
+            value = this.get(path, null),
+            type = typeof value;
+        
+        return (value === null || type === 'string' || type === 'number' || type === 'boolean');
+    }
+    
+    isScalarOrNothing(path) {
+        const
+            value = this.get(path, null),
+            type = typeof value;
+            
+        return (value === undefined || value === null || type === 'string' || type === 'number' || type === 'boolean');
+    }
+
     keys() {
         return Object.keys(this.__data);
     }
 
-    toString() {
-        return '<instance of Config>';
+    static toString() {
+        return 'Config/class';
     }
 
     static from(obj) {

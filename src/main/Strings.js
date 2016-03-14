@@ -1,7 +1,5 @@
 'use strict';
 
-import Objects from './Objects.js';
-
 export default class Strings {
     /**
      * Will throw exception if someone tries to instantiate this utility class.
@@ -11,14 +9,48 @@ export default class Strings {
     construct() {
         throw '[Strings] Class is not instantiable';
     }
+    
 
     /**
-     * Will return a proper string representation for debugging purposes.
+     * Converts a value to a string by using the toString method.
      *
-     * @ignore
+     * @param {any} obj
+     *    The value to be converted
+     *
+     * @return {string}
+     *    The string representation of the value
+     *
+     * @example
+     *    Strings.asString(undefined)         // ''
+     *    Strings.asString(null)              // ''
+     *    Strings.asString(42)                // '42'
+     *    Strings.asString(true)              // 'true'
+     *    Strings.asString(false)             // 'false'
+     *    Strings.asString({toString: 'abc'}) // 'abc'
+     *    Strings.asString('  some text  ')   // '  some text  '
      */
-    static toString() {
-        return '<utility class Strings>';
+    static asString(value) {
+        var ret;
+
+        if (value === undefined || value === null) {
+            ret = '';
+        } else if (typeof value === 'string') {
+            ret = value;
+        } else {
+            ret = value.toString();
+
+            if (typeof ret !== 'string') {
+                // Normally in this case the JavaScript engine should return undefined.
+                // Nevertheless, to play save, we handle all cases here.
+                if (ret === undefined || ret === null) {
+                    ret = '';
+                } else {
+                    ret = '' + ret;
+                }
+            }
+        }
+
+        return ret;
     }
 
    /**
@@ -39,7 +71,7 @@ export default class Strings {
      *     String.trim({toString: () => 'whatever'}) // 'whatever'
      */
     static trim(text) {
-        return Objects.asString(text).trim();
+        return Strings.asString(text).trim();
     }
 
     /**
@@ -49,7 +81,7 @@ export default class Strings {
      * @return {string}
      *     The trimmed string.
      *     If argument 'text' is not a string then it will be converted
-     *     to a string first, using function Objects.asString
+     *     to a string first, using function Strings.asString
      *
      * @example
      *     Strings.trimToNull('  some text  ')             // 'some text'
@@ -67,5 +99,14 @@ export default class Strings {
         }
 
         return ret;
+    }
+    
+    /**
+     * Will return a proper string representation for debugging purposes.
+     *
+     * @ignore
+     */
+    static toString() {
+        return 'String/class';
     }
 }

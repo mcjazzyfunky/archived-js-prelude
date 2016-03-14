@@ -20,7 +20,7 @@ export default class Seq {
     }
 
     toString() {
-        return '<instance of Seq>';
+        return 'Seq/instance';
     }
 
     /**
@@ -234,7 +234,7 @@ export default class Seq {
     }
 
     static toString() {
-        return '<class Seq>';
+        return 'Seq/class';
     }
 
     static empty() {
