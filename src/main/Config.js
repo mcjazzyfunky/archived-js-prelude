@@ -196,31 +196,13 @@ export default class Config {
     
     getArray(path, defaultValue) {
         const
-            rule = 'must be an array',
-            validator = Array.isArray;
+            rule = 'must be an array or some other non-string sequable',
+            validator = Seq.isNonStringSeqable,
+            converter = value => Array.isArray(value) ? value : Seq.from(value).toArray();
 
-        return getConstrainedValue(this, path, defaultValue, rule, validator);
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
   
-    getSeq(path, defaultValue) {
-        const
-            rule = 'must be a sequable',
-            validator = Seq.isSeqable,
-            converter = Seq.from;
-            
-        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
-    }
-    
-    getNonStringSeq(path, defaultValue) {
-        const
-            rule = 'must be a non-string sequable',
-            validator = Seq.isNonStringSeqable,
-            converter = Seq.from;
-            
-        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
-        
-    }
-    
     getConfig(path) {
         const
             rule = 'must be an object or undefined or null',
@@ -228,6 +210,12 @@ export default class Config {
             converter = value => new Config(path);
 
         return getConstrainedValue(this, path, null, rule, validator, converter);
+    }
+    
+    ifDefined(path) {
+        const value = this.get(path, dummyDefaultValue);
+        
+        return value !== dummyDefaultValue;
     }
     
     isSomething(path) {
@@ -281,11 +269,31 @@ export default class Config {
             value = this.get(path, null),
             type = typeof value;
             
-        return (value === undefined || value === null || type === 'string' || type === 'number' || type === 'boolean');
+        return (value === undefined || value === null
+            || type === 'string' || type === 'number' || type === 'boolean');
     }
 
-    keys() {
-        return Object.keys(this.__data);
+    keys(keyValidationRegex = null) {
+        if (keyValidationRegex !== null && !(keyValidationRegex instanceof RegExp)) {
+            throw new TypeError(
+                "[Config:keys] First argument 'keyValidationRegex' must be a regular expression or null");
+        }
+        
+        const
+            ret = Object.keys(this.__data),
+            count = ret.length;
+        
+        for (let i = 0; i < count; ++i) {
+            const key = ret[i];
+            
+            if (typeof key !== 'string') {
+                throw this.error(this, null, `Key '${key}' is not a string`);
+            } else if (keyValidationRegex && !key.matches(keyValidationRegex)) {
+                throw this.error(this, null, `Key '${key}' does not match regular expression ${keyValidationRegex}`);    
+            }
+        }
+
+        return ret;
     }
 
     static toString() {
