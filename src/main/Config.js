@@ -203,16 +203,16 @@ export default class Config {
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
   
-    getConfig(path) {
+    getConfig(path, defaultValue) {
         const
             rule = 'must be an object or undefined or null',
-            validator = value => typeof value === 'object',
-            converter = value => new Config(path);
-
-        return getConstrainedValue(this, path, null, rule, validator, converter);
+            validator = value => value && typeof value === 'object',
+            converter = value => new Config(value);
+        
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
     
-    ifDefined(path) {
+    isDefined(path) {
         const value = this.get(path, dummyDefaultValue);
         
         return value !== dummyDefaultValue;
@@ -288,7 +288,7 @@ export default class Config {
             
             if (typeof key !== 'string') {
                 throw this.error(this, null, `Key '${key}' is not a string`);
-            } else if (keyValidationRegex && !key.matches(keyValidationRegex)) {
+            } else if (keyValidationRegex && !key.match(keyValidationRegex)) {
                 throw this.error(this, null, `Key '${key}' does not match regular expression ${keyValidationRegex}`);    
             }
         }
