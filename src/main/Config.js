@@ -164,7 +164,7 @@ export default class Config {
     getStringMatchingRegex(regex, path, defaultValue) {
         if (!(regex instanceof RegExp)) {
             throw new TypeError(
-                "[Config:getStringMatchingRegex] Second argument 'regex' must be a regular expression");
+                "[Config:getStringMatchngRegex] Second argument 'regex' must be a regular expression");
         }
         
         const

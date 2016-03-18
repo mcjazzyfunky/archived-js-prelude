@@ -1,29 +1,35 @@
-import Objects from './main/Objects';
-import Strings from './main/Strings';
 import Arrays from './main/Arrays';
-import Types from './main/Types'
+import Config from './main/Config';
+import ConfigError from './main/ConfigError';
+import EventStream from './main/EventStream';
+import EventSubject from './main/EventSubject';
+import Objects from './main/Objects';
 import Seq from './main/Seq';
-import Config from './main/Config'
-import ConfigError from './main/ConfigError'
+import Strings from './main/Strings';
+import Types from './main/Types'
 
 export {
-    Objects,
-    Strings,
     Arrays,
-    Types,
-    Seq,
     Config,
-    ConfigError
+    ConfigError,
+    EventStream,
+    EventSubject,
+    Objects,
+    Seq,
+    Strings,
+    Types
 };
 
 const jsprelude = {
-    Objects,
-    Strings,
     Arrays,
-    Types,
-    Seq,
     Config,
-    ConfigError
+    ConfigError,
+    EventStream,
+    EventSubject,
+    Objects,
+    Seq,
+    Strings,
+    Types
 };
 
 if (typeof define === 'function' && define.amd) {
