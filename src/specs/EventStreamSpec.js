@@ -19,7 +19,7 @@ const
                 if (done) {
                    subscriber.complete(); 
                 } else {
-                    if (idx < count) {console.log(111111 + " " + (idx + 1));
+                    if (idx < count) {
                         subscriber.next(++idx);
                     }
                     
@@ -130,6 +130,30 @@ describe('Testing method EventStream#skip', () => {
         expect(array)
             .to.eql([3, 4]);
     }); 
+});
+
+/**
+ * @test {EventStream.concat}
+ */
+describe('Testing static method EventStream.concat', () => {
+    it('should concat synchronous event streams', () => {
+        const array = [];
+        
+        EventStream.concat(stream1, stream2, stream1)
+            .subscribe(value => array.push(value));
+            
+        expect(array)
+            .to.eql([1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4]);
+    });
+    
+    it('should concat asynchronous event streams', (done) => {
+        const array = [];
+        
+        return EventStream.concat(stream3, stream4, stream3)
+            .forEach(value => array.push(value))
+            .then(_ => expect(array).to.eql([1, 2, 3, 4, 5, 11, 22, 33, 1, 2, 3, 4, 5]))
+            .then(done());
+    });
 });
 
 /**

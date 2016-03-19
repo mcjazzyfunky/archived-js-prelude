@@ -2,30 +2,55 @@
 
 import Seq from './Seq';
 
-const noOp = () => {};
-
 export default class EventStream {
     constructor(onSubscribe) {
         if (typeof onSubscribe !== 'function') {
             throw new TypeError(
                 "[EventStream.constructor] First argument 'onSubscribe' must be a function");
         }
-        
+
         this.__onSubscribe = onSubscribe;
     }
     
     subscribe(subscriber) {
+        let
+            unsubscribed = false,
+            callUnsubscribe = false;
+            
         const
-            result = this.__onSubscribe(normalizeSubscriber(subscriber)),
+            unsubscribe = () => {
+                if (!result) {
+                    callUnsubscribe = true;
+                } else if (!unsubscribed) {
+                    unsubscribed = true;
+                    subscriberProxy.complete();
+                    
+                    if (resultIsFunction) {
+                        result();
+                    } else {
+                        result.unsubscribe();
+                    }   
+                }
+            },        
+        
+            subscriberProxy = createSubscriberProxy(subscriber, unsubscribe),
+            result = this.__onSubscribe(subscriberProxy),
             resultIsFunction = typeof result === 'function';
-
+           
         if (!resultIsFunction && (!result || typeof result.unsubscribe !== 'function')) {
             throw new TypeError(
                 "[EventStream.subscribe] The 'onSubscribe' function used for te construction "
                 + 'of the event stream must either return a function or a subscription');
         }
         
-        return resultIsFunction ? {unsubscribe: result} : result;
+        if (callUnsubscribe) {
+            callUnsubscribe = false;
+            unsubscribe();
+        }
+        
+        return {
+            unsubscribe
+        };
     }
    
     filter(pred) {
@@ -39,18 +64,13 @@ export default class EventStream {
             
                 subscription = this.subscribe({
                     next(value) {
-                        try {
-                            if (pred(value, ++idx)) {
-                                subscriber.next(value);
-                            }
-                        } catch (err) {
-                            subscription.unsubscribe();
-                            subscriber.error(err);
+                        if (pred(value, ++idx)) {
+                            subscriber.next(value);
                         }
                     },
                 
                     complete: () => subscriber.complete(),
-                
+                    
                     error: err => subscriber.error(err)
                 });
             
@@ -68,17 +88,12 @@ export default class EventStream {
                 
             const subscription = this.subscribe({
                 next(value) {
-                    try {
-                        subscriber.next(f(value, ++idx))
-                    } catch (err) {
-                        subscription.unsubscribe();
-                        subscriber.error(err);
-                    }
+                    subscriber.next(f(value, ++idx));
                 },
                 
-                complete: () => subscriber.complete(),
+                error: err => subscriber.error(err),
                 
-                error: err => subscriber.error(err)
+                complete: () => subscriber.complete()
             });
                 
             return subscription;
@@ -103,7 +118,7 @@ export default class EventStream {
                             subscriber.next(event);
                             ++idx;
                         } else {
-                           ret.unsubscribe();
+                           subscriber.complete();
                         }
                     },
                     
@@ -142,36 +157,158 @@ export default class EventStream {
         });
     }
     
-    
     combineLatest(streamable) {
         // TODO    
     }
+
+    concat(...streamables) {
+        return EventStream.concat(this, ...streamables);
+    }    
     
     merge(...streamables) {
         return EventStream.merge(this, ...streamables);    
     }
     
-    static merge(...streamables) {
-        return new EventStream(subscriber => {
-            const subscriptions = [];
+    forEach(f) {
+        if (typeof f !== 'function') {
+           throw new TypeError("[EventStream#forEach] First argument 'f' must be a function") ;
+        }
+        
+        return new Promise((resolve, reject) => {
+            let
+                counter = 0,
+                callUnsubscribe = false;
             
-            for (let streamable of streamables) {
-                const subscription = EventStream.from(streamable).subscribe({
-                    next: value => subscriber.next(value),
-                    error: err => subscriber.error(err),
-                    complete: () => subscriber.complete()
-                });
+            const subscription = this.subscribe({
+                next(value) {
+                    try {
+                        f(value);    
+                        ++counter;
+                    } catch (err) {
+                        if (subscription) {
+                            subscription.unsubscribe();
+                        } else {
+                            callUnsubscribe = true; // in case of synchronous event streams
+                        }
+                        
+                        reject(err);
+                    }
+                },
                 
-                subscriptions.push(subscription);
-            }
+                error: reject,
+                complete: () => resolve(counter)
+            });
             
-            return () => {
-                for (let subscription of subscriptions) {
+            if (callUnsubscribe) {
+                callUnsubscribe = false;
+                subscription.unsubscribe();
+            }
+        });
+    }
+    
+    toString() {
+        return "EventStream/instance";
+    }
+    
+    static concat(...streamables) {
+        const
+            streams =
+                Seq.from(streamables)
+                    .filter(streamable => EventStream.isStreamable(streamable))
+                    .map(streamable => EventStream.from(streamable))
+                    .toArray(),
+                    
+            streamCount = streams.length;
+        
+        return (
+            streamCount === 0
+            ? EventStream.empty()
+            : new EventStream(subscriber => {
+                let
+                    streamIndex = -1,
+                    subscription = null,
+                    callUnsubscribe = false,
+                
+                    performSubscription = () => {
+                        subscription = streams[++streamIndex].subscribe({
+                            next(value) {
+                                subscriber.next(value);    
+                            },
+                            
+                            error(err) {
+                                subscriber.error(err);
+                            },
+                            
+                            complete() {
+                                if (subscription) {
+                                    subscription.unsubscribe();
+                                    subscription = null;
+                                } else {
+                                    callUnsubscribe = true;
+                                }
+                                
+                                if (streamIndex < streamCount - 1) {
+                                    performSubscription();
+                                }
+                            }                
+                        });
+                    };
+                    
+                performSubscription();
+                   
+                if (callUnsubscribe) {
+                    callUnsubscribe = false;    
                     subscription.unsubscribe();
                 }
+                    
+                return () => {
+                    if (subscription) {
+                        subscription.unsubscribe();
+                    }       
+                };
+            })
+        );
+    }
+    
+    static merge(...streamables) {
+        const
+            streams =
+                Seq.from(streamables)
+                    .filter(streamable => EventStream.isStreamable(streamable))
+                    .map(streamable => EventStream.from(streamable))
+                    .toArray();
+
+        return new EventStream(subscriber => {
+            const
+                subscriptions = [],
                 
-                subscriptions.length = 0;
-            };
+                unsubscribe = () => {
+                    for (let subscription of subscriptions) {
+                        if (subscription) {
+                            subscription.unsubscribe();
+                        }
+                    }
+                    
+                    subscriptions.length = 0;
+                };
+            
+            let activeStreamCount = streams.length;
+            
+            for (let i = 0; i < streams.length; ++i) {
+                streams[i].subscribe({
+                    next: value => subscriber.next(value),
+                     
+                    error: err => subscriber.error(err), 
+                      
+                    complete: () => {
+                        if (--activeStreamCount === 0) {
+                            subscriber.complete();
+                        }
+                    }
+                });
+            }
+       
+            return unsubscribe;     
         });
     }
     
@@ -202,28 +339,6 @@ export default class EventStream {
         return ret;
     }
     
-    forEach(f) {
-        if (typeof f !== 'function') {
-           throw new TypeError("[EventStream#forEach] First argument 'f' must be a function") ;
-        }
-        
-        return new Promise((resolve, reject) => {
-            const subscription = this.subscribe({
-                next(value) {
-                    try {
-                        f(value);    
-                    } catch (err) {
-                        subscription.unsubscribe();
-                        reject(err);
-                    }
-                },
-                
-                error: reject,
-                complete: resolve
-            });
-        });
-    }
-    
     static of(...events) {
         return EventStream.from(events);
     }
@@ -238,26 +353,73 @@ export default class EventStream {
             || Seq.isSeqable(obj)
         );
     }
+    
+    static toString() {
+        return 'EventStream/class';
+    }
 }
 
-function normalizeSubscriber(subscriber) {
-    let ret;
-    
+function createSubscriberProxy(subscriber, unsubscribe) {
+    let 
+        onNext = null,
+        onError = null,
+        onComplete = null,
+        done = false;
+        
     if (typeof subscriber === 'function') {
-        ret = {
-            next: subscriber,
-            complete: () => {}, 
-            error: _ => {}
-        };
-    } else {
-        ret = {
-            next: subscriber && typeof subscriber.next === 'function' ? subscriber.next : noOp,
-            complete: subscriber && typeof subscriber.complete === 'function' ? subscriber.complete: noOp,
-            error: subscriber && typeof subscriber.error === 'function' ? subscriber.error: noOp
+       onNext = subscriber; 
+    } else if (subscriber) {
+        if (typeof subscriber.next === 'function') {
+            onNext = value => subscriber.next(value);
+        }
+        
+        if (typeof subscriber.error === 'function') {
+            onError = err => subscriber.error(err);
+        }
+        
+        if (typeof subscriber.complete === 'function') {
+            onComplete = () => subscriber.complete();
         }
     }
 
-    return ret;
+    return {
+        next(value) {
+            if (!done && onNext) {
+                try {
+                    onNext(value);
+                } catch (err) {
+                    if (onError) {
+                        onError(err);
+                    }
+
+                    unsubscribe();
+                    done = true;
+                }
+            }
+        },
+        
+        error(err) {
+            if (!done) {
+                if (onError) {
+                    onError(err);
+                }
+                
+                unsubscribe();
+                done = true;
+            }
+        },
+        
+        complete() {
+            if (!done) {
+                if (onComplete) {
+                    onComplete();
+                }
+                
+                unsubscribe();
+                done = true;
+            }
+        },
+    };
 }
 
 const emptyEventStream = new EventStream(subscriber => {

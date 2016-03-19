@@ -7,7 +7,7 @@ import Types from '../../src/main/Types';
 /**
  * @test {Types.isSomething}
  */
-describe('Testing static function Types.isSomething', () => {
+describe('Testing static function Types#isSomething', () => {
     it('should return false if the input is undefined', () =>
         expect(Types.isSomething(undefined))
                 .to.eql(false)
@@ -52,7 +52,7 @@ describe('Testing static function Types.isSomething', () => {
 /**
  * @test {Types.isNothing}
  */
-describe('Testing static function Types.isNothing', () => {
+describe('Testing static function Types#isNothing', () => {
     it('should return true if the input is undefined', () =>
         expect(Types.isNothing(undefined))
                 .to.eql(true)
