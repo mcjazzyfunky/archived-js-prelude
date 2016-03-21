@@ -47,16 +47,16 @@ const
 describe('Testing method EventStream.from', () => {
     it('should build EventStream from seqable and return unmodified EventStream if given', () => {
         const
-            array1 = [],
-            array2 = [];
+            values1 = [],
+            values2 = [];
             
-        EventStream.from(stream2).subscribe(value => array1.push(value));
-        stream2.subscribe(value => array2.push(value));
+        EventStream.from(stream2).subscribe(value => values1.push(value));
+        stream2.subscribe(value => values2.push(value));
         
-        expect(array1)
+        expect(values1)
             .to.eql([2, 3, 4, 5]);
             
-        expect(array2)
+        expect(values2)
             .to.eql([2, 3, 4, 5]);
     });
 });
@@ -66,11 +66,11 @@ describe('Testing method EventStream.from', () => {
  */
 describe('Testing method EventStream.of', () => {
     it('should build EventStream of items', () => {
-        const array = [];
+        const values = [];
        
-        stream1.subscribe(value => array.push(value));
+        stream1.subscribe(value => values.push(value));
        
-        expect(array)
+        expect(values)
             .to.eql([1, 2, 3, 4]);   
     });
 });
@@ -80,11 +80,11 @@ describe('Testing method EventStream.of', () => {
  */
 describe('Testing method EventStream#filter', () => {
     it('should filter events properly', () => {
-        const array = [];
+        const values = [];
         
-        stream1.filter(n => n % 2 === 0).subscribe(value => array.push(value));
+        stream1.filter(n => n % 2 === 0).subscribe(value => values.push(value));
         
-        expect(array)
+        expect(values)
             .to.eql([2, 4]);
     }); 
 });
@@ -94,11 +94,11 @@ describe('Testing method EventStream#filter', () => {
  */
 describe('Testing method EventStream#map', () => {
     it('should map values properly', () => {
-        const array = [];
+        const values = [];
         
-        stream1.map(n => n * n).subscribe(m => array.push(m));
+        stream1.map(n => n * n).subscribe(m => values.push(m));
         
-        expect(array)
+        expect(values)
             .to.eql([1, 4, 9, 16]);
     }); 
 });
@@ -109,11 +109,11 @@ describe('Testing method EventStream#map', () => {
  */
 describe('Testing method EventStream#take', () => {
     it('should limit to n events', () => {
-        const array = [];
+        const values = [];
         
-        stream1.take(3).subscribe(value => array.push(value));
+        stream1.take(3).subscribe(value => values.push(value));
         
-        expect(array)
+        expect(values)
             .to.eql([1, 2, 3]);
     }); 
 });
@@ -123,11 +123,11 @@ describe('Testing method EventStream#take', () => {
  */
 describe('Testing method EventStream#skip', () => {
     it('should skip n events', () => {
-        const array = [];
+        const values = [];
         
-        stream1.skip(2).subscribe(value => array.push(value));
+        stream1.skip(2).subscribe(value => values.push(value));
         
-        expect(array)
+        expect(values)
             .to.eql([3, 4]);
     }); 
 });
@@ -137,22 +137,22 @@ describe('Testing method EventStream#skip', () => {
  */
 describe('Testing static method EventStream.concat', () => {
     it('should concat synchronous event streams', () => {
-        const array = [];
+        const values = [];
         
         EventStream.concat(stream1, stream2, stream1)
-            .subscribe(value => array.push(value));
+            .subscribe(value => values.push(value));
             
-        expect(array)
+        expect(values)
             .to.eql([1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4]);
     });
     
     it('should concat asynchronous event streams', () => {
-        const array = [];
+        const values = [];
         
         return EventStream.concat(stream1, stream3, stream3)
-            .forEach(value => array.push(value))
+            .forEach(value => values.push(value))
             .then(_ => {
-               expect(array).to.eql([1, 2, 3, 4, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5]);
+               expect(values).to.eql([1, 2, 3, 4, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5]);
             });
     });
 });
@@ -181,16 +181,31 @@ describe('Testing method EventStream#merge', () => {
 });
 
 /**
+ *
+ */
+describe('Testing method EventStream#combineLatest', () => {
+    it("should combine two event stream using operation 'combineLatest'", () => {
+        const values = [];
+       
+        return stream3.combineLatest(stream4, (v1, v2) => [v1, v2]).forEach(value => values.push(value))
+            .then(_ => {
+                expect(values).to.eql([[1, 11], [2, 11], [2, 22], [3, 22], [3, 33], [4, 33], [5, 33]]); 
+            });       
+    });
+});
+
+
+/**
  * @test {EventStream#forEach}
  */
 describe('Testing method EventStream#forEach', () => {
     it('should apply for for each value of the stream', () => {
-        const array = [];
+        const values = [];
 
-       return stream3.forEach(value => array.push(value))
+       return stream3.forEach(value => values.push(value))
             .then(n => {
                 expect(n).to.eql(5);
-                expect(array).to.eql([1, 2, 3, 4, 5]);
+                expect(values).to.eql([1, 2, 3, 4, 5]);
             });
     });
 });

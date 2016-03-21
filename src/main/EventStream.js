@@ -148,8 +148,80 @@ export default class EventStream {
         });
     }
     
-    combineLatest(streamable) {
-        // TODO    
+    combineLatest(streamable, fn) {
+        const stream = EventStream.from(streamable);
+        
+        return new EventStream(subscriber => {
+            const
+                unsubscribe = () => {
+                    if (subscription1) {
+                        subscription1.unsubscribe();
+                    }
+                    
+                    if (subscription2) {
+                        subscription2.unsubscribe();
+                    }
+                    
+                    subscription1 = null;
+                    subscription2 = null;
+                };
+                
+            let
+                value1 = null,
+                value1IsSet = false,
+                value2 = null,
+                value2IsSet = false,
+            
+                subscription1 = this.subscribe({
+                    next(value) {
+                        value1 = value;
+                        value1IsSet = true;
+                        
+                        if (value2IsSet) {
+                            subscriber.next(fn(value1, value2));
+                        }
+                    },
+                    
+                    error(err) {
+                        unsubscribe(); 
+                        subscriber.error(err);
+                    },
+                    
+                    complete() {
+                        subscription1 = null;
+                        
+                        if (!subscription2) {
+                            subscriber.complete();
+                        } 
+                    }
+                }),
+                
+                subscription2 = stream.subscribe({
+                    next(value) {
+                        value2 = value;
+                        value2IsSet = true;
+                        
+                        if (value1IsSet) {
+                            subscriber.next(fn(value1, value2));
+                        }
+                    },
+                    
+                    error(err) {
+                        unsubscribe(); 
+                        subscriber.error(err);
+                    },
+                    
+                    complete() {
+                        subscription2 = null;
+                        
+                        if (!subscription1) {
+                            subscriber.complete();
+                        }
+                    }
+                });
+            
+            return unsubscribe;
+        });
     }
 
     concat(...streamables) {
