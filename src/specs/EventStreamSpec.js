@@ -158,6 +158,29 @@ describe('Testing static method EventStream.concat', () => {
 });
 
 /**
+ * @test {EventStream#merge}
+ */
+describe('Testing method EventStream#merge', () => {
+    it('should merge multiple synchronous event stream to a single one', () => {
+        const values = [];
+        
+        return EventStream.merge(stream1, stream2, stream1).forEach(value => values.push(value))
+            .then(_ => {
+                expect(values).to.eql([1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4]);
+            });
+    });
+    
+    it('should merge multiple asynchronous event stream to a single one', () => {
+        const values = [];
+        
+        return EventStream.merge(stream3, stream4, stream3).forEach(value => values.push(value))
+            .then(_ => {
+                expect(values).to.eql([1, 11, 1, 2, 22, 2, 3, 33, 3, 4, 4, 5, 5]);
+            });
+    });
+});
+
+/**
  * @test {EventStream#forEach}
  */
 describe('Testing method EventStream#forEach', () => {
