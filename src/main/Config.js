@@ -139,7 +139,7 @@ export default class Config {
     getStringOrNull(path) {
         return this.getString(path, null) || null;
     };
-
+    
     getTrimmedString(path, defaultValue) {
         return this.getString(path, defaultValue).trim();
     };
@@ -273,6 +273,18 @@ export default class Config {
             || type === 'string' || type === 'number' || type === 'boolean');
     }
 
+    ifDefined(path, valueTrue, valueFalse) {
+        return this.isDefined(path) ? valueTrue : valueFalse;
+    }
+
+    ifSomething(path, valueTrue, valueFalse) {
+        return this.isSomething(path) ? valueTrue : valueFalse;    
+    }
+    
+    ifNothing(path, valueTrue, valueFalse) {
+        return this.isNothing(path) ? valueTrue : valueFalse;
+    }
+    
     keys(keyValidationRegex = null) {
         if (keyValidationRegex !== null && !(keyValidationRegex instanceof RegExp)) {
             throw new TypeError(
