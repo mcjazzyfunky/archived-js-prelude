@@ -146,13 +146,14 @@ describe('Testing static method EventStream.concat', () => {
             .to.eql([1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4]);
     });
     
-    it('should concat asynchronous event streams', (done) => {
+    it('should concat asynchronous event streams', () => {
         const array = [];
         
-        return EventStream.concat(stream3, stream4, stream3)
+        return EventStream.concat(stream1, stream3, stream3)
             .forEach(value => array.push(value))
-            .then(_ => expect(array).to.eql([1, 2, 3, 4, 5, 11, 22, 33, 1, 2, 3, 4, 5]))
-            .then(done());
+            .then(_ => {
+               expect(array).to.eql([1, 2, 3, 4, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5]);
+            });
     });
 });
 
@@ -162,8 +163,11 @@ describe('Testing static method EventStream.concat', () => {
 describe('Testing method EventStream#forEach', () => {
     it('should apply for for each value of the stream', () => {
         const array = [];
-        
-        stream3.forEach(value => array.push(value))
-            .then(_ => expect(array).to.eql([1, 2, 3, 4, 5]));
+
+       return stream3.forEach(value => array.push(value))
+            .then(n => {
+                expect(n).to.eql(5);
+                expect(array).to.eql([1, 2, 3, 4, 5]);
+            });
     });
 });

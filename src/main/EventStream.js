@@ -13,23 +13,19 @@ export default class EventStream {
     }
     
     subscribe(subscriber) {
-        let
-            unsubscribed = false,
-            callUnsubscribe = false;
+        let unsubscribed = false;
             
         const
             unsubscribe = () => {
-                if (!result) {
-                    callUnsubscribe = true;
-                } else if (!unsubscribed) {
+                if (!unsubscribed) {
                     unsubscribed = true;
                     subscriberProxy.complete();
                     
                     if (resultIsFunction) {
                         result();
-                    } else {
+                    } else if (result) {
                         result.unsubscribe();
-                    }   
+                    }
                 }
             },        
         
@@ -41,11 +37,6 @@ export default class EventStream {
             throw new TypeError(
                 "[EventStream.subscribe] The 'onSubscribe' function used for te construction "
                 + 'of the event stream must either return a function or a subscription');
-        }
-        
-        if (callUnsubscribe) {
-            callUnsubscribe = false;
-            unsubscribe();
         }
         
         return {
@@ -175,20 +166,15 @@ export default class EventStream {
         }
         
         return new Promise((resolve, reject) => {
-            let
-                counter = 0,
-                callUnsubscribe = false;
+            let counter = -1;
             
             const subscription = this.subscribe({
                 next(value) {
                     try {
-                        f(value);    
-                        ++counter;
+                        f(value, ++counter);    
                     } catch (err) {
                         if (subscription) {
                             subscription.unsubscribe();
-                        } else {
-                            callUnsubscribe = true; // in case of synchronous event streams
                         }
                         
                         reject(err);
@@ -196,13 +182,8 @@ export default class EventStream {
                 },
                 
                 error: reject,
-                complete: () => resolve(counter)
+                complete: () => resolve(counter + 1)
             });
-            
-            if (callUnsubscribe) {
-                callUnsubscribe = false;
-                subscription.unsubscribe();
-            }
         });
     }
     
@@ -227,44 +208,46 @@ export default class EventStream {
                 let
                     streamIndex = -1,
                     subscription = null,
-                    callUnsubscribe = false,
+                    done = false,
                 
                     performSubscription = () => {
                         subscription = streams[++streamIndex].subscribe({
                             next(value) {
-                                subscriber.next(value);    
+                                if (done) {
+                                    if (subscription) {
+                                        
+                                    }
+                                } else {
+                                    subscriber.next(value);   
+                                }
                             },
                             
                             error(err) {
                                 subscriber.error(err);
+
                             },
                             
                             complete() {
-                                if (subscription) {
-                                    subscription.unsubscribe();
-                                    subscription = null;
-                                } else {
-                                    callUnsubscribe = true;
-                                }
+                                subscription = null;
                                 
-                                if (streamIndex < streamCount - 1) {
+                                if (!done && streamIndex < streamCount - 1) {
                                     performSubscription();
+                                } else {
+                                    subscriber.complete();
                                 }
-                            }                
+                            }     
                         });
                     };
                     
                 performSubscription();
                    
-                if (callUnsubscribe) {
-                    callUnsubscribe = false;    
-                    subscription.unsubscribe();
-                }
-                    
                 return () => {
+                    done = true;
+                    
                     if (subscription) {
                         subscription.unsubscribe();
-                    }       
+                        subscription = null;
+                    }
                 };
             })
         );
@@ -321,7 +304,7 @@ export default class EventStream {
             return new EventStream(subscriber => {
                 try {
                     Seq.from(obj)
-                        .forEach(item => subscriber.next(item));
+                        .forEach(value => subscriber.next(value));
                 } catch (err) {
                     subscriber.error(err);
                 }
@@ -392,8 +375,8 @@ function createSubscriberProxy(subscriber, unsubscribe) {
                         onError(err);
                     }
 
-                    unsubscribe();
                     done = true;
+                    unsubscribe();
                 }
             }
         },
@@ -404,8 +387,8 @@ function createSubscriberProxy(subscriber, unsubscribe) {
                     onError(err);
                 }
                 
-                unsubscribe();
                 done = true;
+                unsubscribe();
             }
         },
         
@@ -415,8 +398,8 @@ function createSubscriberProxy(subscriber, unsubscribe) {
                     onComplete();
                 }
                 
-                unsubscribe();
                 done = true;
+                unsubscribe();
             }
         },
     };
