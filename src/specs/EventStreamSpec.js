@@ -20,7 +20,7 @@ const
                    subscriber.complete(); 
                 } else {
                     if (idx < count) {
-                        subscriber.next(++idx);
+                        setTimeout(() => subscriber.next(++idx), 0);
                     }
                     
                     if (idx < count) {
@@ -130,6 +130,55 @@ describe('Testing method EventStream#skip', () => {
         expect(values)
             .to.eql([3, 4]);
     }); 
+});
+
+/**
+ * @test {EventStream#scan}
+ */
+describe('Testing method EventStream#scan', () => {
+    it("should accumulate event stream values using 'scan' without seed value", () => {
+        const values = [];
+        
+        EventStream.of(1, 2, 3, 4)
+            .scan((acc, value) => acc + value)
+            .subscribe(value => values.push(value));
+            
+        expect(values)
+            .to.eql([1, 3, 6, 10]);
+    });
+
+    
+    it("should accumulate event stream values using 'scan' with seed value", () => {
+        const values = [];
+        
+        EventStream.of(1, 2, 3, 4)
+            .scan((acc, value) => acc + value, 10)
+            .subscribe(value => values.push(value));
+            
+        expect(values)
+            .to.eql([11, 13, 16, 20]);
+    });
+});
+
+/**
+ * @test {EventStream.startWith}
+ */
+describe('Testing method EventStream#startWith', () => {
+   it('should prepend a value at the beginning of the event stream', () => {
+        const
+            values = [],
+            
+            ret = stream3.startWith(42)
+                .forEach(value => values.push(value))
+                .then(_ => {
+                    expect(values).to.eql([42, 1, 2, 3, 4, 5]);
+                });
+       
+        expect(values)
+            .to.eql([42]);
+            
+        return ret;
+   });
 });
 
 /**

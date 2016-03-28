@@ -2,7 +2,7 @@
 
 import EventStream from './EventStream';
 
-export class EventSubject extends EventStream {
+export default class EventSubject extends EventStream {
     constructor() {
         super(subscriber => {
             this.__subscribers.push(subscriber);
@@ -11,7 +11,7 @@ export class EventSubject extends EventStream {
                 const index = this.__subscribers.indexOf(subscriber);
                     
                 this.__subscribers.slice(index, index + 1);
-            }
+            };
         });
         
         this.__subscribers = [];

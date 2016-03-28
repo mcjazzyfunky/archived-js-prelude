@@ -218,6 +218,12 @@ export default class Config {
         return value !== dummyDefaultValue;
     }
     
+    isUndefined(path) {
+        const value = this.get(path, dummyDefaultValue);
+        
+        return value === dummyDefaultValue;
+    }
+    
     isSomething(path) {
         const value = this.get(path, null);
         
@@ -276,12 +282,16 @@ export default class Config {
     ifDefined(path, valueTrue, valueFalse) {
         return this.isDefined(path) ? valueTrue : valueFalse;
     }
+    
+    ifUndefined(path, valueTrue, valueFalse = null) {
+        return this.isUndefined(path) ? valueTrue : valueFalse;
+    }
 
-    ifSomething(path, valueTrue, valueFalse) {
+    ifSomething(path, valueTrue, valueFalse = null) {
         return this.isSomething(path) ? valueTrue : valueFalse;    
     }
     
-    ifNothing(path, valueTrue, valueFalse) {
+    ifNothing(path, valueTrue, valueFalse = null) {
         return this.isNothing(path) ? valueTrue : valueFalse;
     }
     

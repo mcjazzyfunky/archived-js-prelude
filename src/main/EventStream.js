@@ -223,6 +223,30 @@ export default class EventStream {
             return unsubscribe;
         });
     }
+    
+    scan(fn, seed = undefined) {
+        if (typeof fn !== 'function') {
+            throw new TypeError("[EventStream#scan] First argument 'fn' must be a function");
+        }
+        
+        return new EventStream(subscriber => {
+            let
+                accumulator = null,
+                idx = -1;
+            
+            return this.subscribe({
+                next: value => {
+                    if (++idx === 0) {
+                        accumulator = seed === undefined ? value : fn(seed, value, 0);
+                    } else {
+                        accumulator = fn(accumulator, value, idx);
+                    }
+                    
+                    subscriber.next(accumulator);
+                }
+            });
+        });
+    }
 
     concat(...streamables) {
         return EventStream.concat(this, ...streamables);
@@ -230,6 +254,10 @@ export default class EventStream {
     
     merge(...streamables) {
         return EventStream.merge(this, ...streamables);    
+    }
+    
+    startWith(value) {
+        return EventStream.of(value).concat(this);
     }
     
     forEach(f) {

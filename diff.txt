@@ -1,0 +1,219 @@
+diff --git a/package.json b/package.json
+index 1869d03..2aaa1e7 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "js-prelude",
+-  "version": "0.1.23",
++  "version": "0.1.26",
+   "license": "BSD-3-Clause",
+   "homepage": "https://github.com/mcjazzyfunky/js-prelude",
+   "repository": {
+diff --git a/src/main/Config.js b/src/main/Config.js
+index 54de63d..081cd74 100644
+--- a/src/main/Config.js
++++ b/src/main/Config.js
+@@ -218,6 +218,12 @@ export default class Config {
+         return value !== dummyDefaultValue;
+     }
+     
++    isUndefined(path) {
++        const value = this.get(path, dummyDefaultValue);
++        
++        return value === dummyDefaultValue;
++    }
++    
+     isSomething(path) {
+         const value = this.get(path, null);
+         
+@@ -276,12 +282,16 @@ export default class Config {
+     ifDefined(path, valueTrue, valueFalse) {
+         return this.isDefined(path) ? valueTrue : valueFalse;
+     }
++    
++    ifUndefined(path, valueTrue, valueFalse = null) {
++        return this.isUndefined(path) ? valueTrue : valueFalse;
++    }
+ 
+-    ifSomething(path, valueTrue, valueFalse) {
++    ifSomething(path, valueTrue, valueFalse = null) {
+         return this.isSomething(path) ? valueTrue : valueFalse;    
+     }
+     
+-    ifNothing(path, valueTrue, valueFalse) {
++    ifNothing(path, valueTrue, valueFalse = null) {
+         return this.isNothing(path) ? valueTrue : valueFalse;
+     }
+     
+diff --git a/src/main/EventStream.js b/src/main/EventStream.js
+index 10c00a8..e370c9c 100644
+--- a/src/main/EventStream.js
++++ b/src/main/EventStream.js
+@@ -223,6 +223,30 @@ export default class EventStream {
+             return unsubscribe;
+         });
+     }
++    
++    scan(fn, seed = undefined) {
++        if (typeof fn !== 'function') {
++            throw new TypeError("[EventStream#scan] First argument 'fn' must be a function");
++        }
++        
++        return new EventStream(subscriber => {
++            let
++                accumulator = null,
++                idx = -1;
++            
++            return this.subscribe({
++                next: value => {
++                    if (++idx === 0) {
++                        accumulator = seed === undefined ? value : fn(seed, value, 0);
++                    } else {
++                        accumulator = fn(accumulator, value, idx);
++                    }
++                    
++                    subscriber.next(accumulator);
++                }
++            });
++        });
++    }
+ 
+     concat(...streamables) {
+         return EventStream.concat(this, ...streamables);
+@@ -232,6 +256,10 @@ export default class EventStream {
+         return EventStream.merge(this, ...streamables);    
+     }
+     
++    startWith(value) {
++        return EventStream.of(value).concat(this);
++    }
++    
+     forEach(f) {
+         if (typeof f !== 'function') {
+            throw new TypeError("[EventStream#forEach] First argument 'f' must be a function") ;
+diff --git a/src/main/EventSubject.js b/src/main/EventSubject.js
+index e50a928..20c6228 100644
+--- a/src/main/EventSubject.js
++++ b/src/main/EventSubject.js
+@@ -2,7 +2,7 @@
+ 
+ import EventStream from './EventStream';
+ 
+-export class EventSubject extends EventStream {
++export default class EventSubject extends EventStream {
+     constructor() {
+         super(subscriber => {
+             this.__subscribers.push(subscriber);
+@@ -11,7 +11,7 @@ export class EventSubject extends EventStream {
+                 const index = this.__subscribers.indexOf(subscriber);
+                     
+                 this.__subscribers.slice(index, index + 1);
+-            }
++            };
+         });
+         
+         this.__subscribers = [];
+diff --git a/src/specs/EventStreamSpec.js b/src/specs/EventStreamSpec.js
+index b7a5389..75ba169 100644
+--- a/src/specs/EventStreamSpec.js
++++ b/src/specs/EventStreamSpec.js
+@@ -20,7 +20,7 @@ const
+                    subscriber.complete(); 
+                 } else {
+                     if (idx < count) {
+-                        subscriber.next(++idx);
++                        setTimeout(() => subscriber.next(++idx), 0);
+                     }
+                     
+                     if (idx < count) {
+@@ -133,6 +133,55 @@ describe('Testing method EventStream#skip', () => {
+ });
+ 
+ /**
++ * @test {EventStream#scan}
++ */
++describe('Testing method EventStream#scan', () => {
++    it("should accumulate event stream values using 'scan' without seed value", () => {
++        const values = [];
++        
++        EventStream.of(1, 2, 3, 4)
++            .scan((acc, value) => acc + value)
++            .subscribe(value => values.push(value));
++            
++        expect(values)
++            .to.eql([1, 3, 6, 10]);
++    });
++
++    
++    it("should accumulate event stream values using 'scan' with seed value", () => {
++        const values = [];
++        
++        EventStream.of(1, 2, 3, 4)
++            .scan((acc, value) => acc + value, 10)
++            .subscribe(value => values.push(value));
++            
++        expect(values)
++            .to.eql([11, 13, 16, 20]);
++    });
++});
++
++/**
++ * @test {EventStream.startWith}
++ */
++describe('Testing method EventStream#startWith', () => {
++   it('should prepend a value at the beginning of the event stream', () => {
++        const
++            values = [],
++            
++            ret = stream3.startWith(42)
++                .forEach(value => values.push(value))
++                .then(_ => {
++                    expect(values).to.eql([42, 1, 2, 3, 4, 5]);
++                });
++       
++        expect(values)
++            .to.eql([42]);
++            
++        return ret;
++   });
++});
++
++/**
+  * @test {EventStream.concat}
+  */
+ describe('Testing static method EventStream.concat', () => {
+diff --git a/src/specs/EventSubjectSpec.js b/src/specs/EventSubjectSpec.js
+index e69de29..07989e3 100644
+--- a/src/specs/EventSubjectSpec.js
++++ b/src/specs/EventSubjectSpec.js
+@@ -0,0 +1,28 @@
++'use strict';
++
++import {describe, it} from 'mocha';
++import {expect} from 'chai';
++import EventSubject from '../../src/main/EventSubject';
++
++
++/**
++ * @test {EventSubject.subscribe}
++ */
++describe('Testing method EventSubject.subscribe', () => {
++    it('should emit events to subscribers', () => {
++        const
++            values = [],
++            subject = new EventSubject();
++            
++        subject.subscribe(value => values.push(value));
++       
++        subject.next(42);
++        subject.next(43);
++        subject.next(44);
++        subject.complete();
++        subject.next(45);
++       
++        expect(values)
++            .to.eql([42, 43, 44]);   
++    });
++});
+\ No newline at end of file
