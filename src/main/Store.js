@@ -9,6 +9,10 @@ import Strings from './Strings.js';
 const METHOD_NAME_REGEX = /^[a-z][a-zA-Z0-9]*$/;
 
 export default class Store {
+    // updateEvents;
+
+    // notificationEvents;
+
     /**
      * @ignore
      */
@@ -79,21 +83,57 @@ function createMasterClass(spec) {
             actionNames = actionsConfig ? actionsConfig.keys(METHOD_NAME_REGEX) : [];
 
         ret = function (params) {
+            const
+                updateSubject = new EventSubject(),
+                notificationSubject = new EventSubject();
+
+
             if (params !== undefined && params !== null && typeof params !== 'object') {
                 throw new LocalTypeError('Store parameters must be provided as object');
             }
 
-            this.__params = Object.freeze(Object.assign({}, defaultParams, params));
-            this.__proxy = new ret.Proxy(this);
-            this.__state = null;
+            this.params = Object.freeze(Object.assign({}, defaultParams, params));
+            this.proxy = new ret.Proxy(this);
+            this.updateEvents = updateSubject.asEventStream();
+            this.notificationEvents = notificationSubject.asEventStream();
+
+            let
+                state = initialState,
+                sendingUpdateTimeoutId = null;
 
             if (typeof initialState === 'function') {
-                const state = initialState.call(this.__proxy);
-
-                this.__state = state === undefined ? null : state;
-            } else {
-                this.__state = initialState;
+                state = initialState.call(this.proxy);
             }
+
+            if (state === undefined) {
+                state = null;
+            }
+
+            Object.defineProperty(this, 'state', {
+                get() {
+                    return state;
+                },
+
+                set(newState) {
+                    state = newState;
+
+                    if (!sendingUpdateTimeoutId) {
+                        sendingUpdateTimeoutId = setTimeout(() => {
+                            sendingUpdateTimeoutId = null;
+
+                            updateSubject.next({
+                                type: 'update'
+                            });
+                        }, 0);
+                    }
+                }
+            });
+
+            this.notify = notification => {
+                setTimeout(() => {
+                    notificationSubject.next(notification);
+                }, 0);
+            };
         };
 
         const
@@ -103,21 +143,17 @@ function createMasterClass(spec) {
             if (getterName === 'state' || getterName === 'params' || proto[getterName] !== undefined) {
                 throw new LocalError(`Getter name '${getterName}' is not allowed`);
             }
-
             const method = gettersConfig.getFunction(getterName);
 
-            proto[getterName] = function (...args) {console.log(999999)
-                return method.apply(this.__proxy, args);
+            proto[getterName] = function (...args) {
+                return method.apply(this.proxy, args);
             };
         }
 
         for (let actionName of actionNames) {
             const method = actionsConfig.getFunction(actionName);
-            
-            proto[actionName] = buildActionMethod(function (...args) {
-                console.log(7777, this.__proxy)
-                return method.apply(this.__proxy, args);
-            });
+
+            proto[actionName] = buildActionMethod(method);
         }
 
         ret.actionNames = actionNames;
@@ -140,36 +176,47 @@ function createProxyClass(MasterClass) {
 
         ret = function (master) {
             this.__master = master;
-            this.params = master.__params;
+            this.params = master.params;
+
 
             Object.defineProperty(this, 'state', {
                 get() {
-                    return this.__master.__state;
+                    return this.__master.state;
                 }
             });
 
-            Object.defineProperty(this, 'updates', {
+            Object.defineProperty(this, 'updateEvents', {
                 get() {
                    throw new Error(
-                       "[Store] It's not allowed to access property 'updates' "
+                       "[Store] It's not allowed to access property 'updateEvents' "
                        + 'from the current context');
                 }
             });
 
-            Object.defineProperty(this, 'notifications', {
+            Object.defineProperty(this, 'notificationEvents', {
                 get() {
                    throw new Error(
-                       "[Store] It's not allowed to access property 'notifications' "
+                       "[Store] It's not allowed to access property 'notificationEvents'"
                        + 'from the current context');
                 }
             });
+
+            this.notify = notification => {
+                if (false) {
+                    throw new Error(
+                        "[Store] It's not allowed to access function 'notify'"
+                        + 'from the current context');
+                }
+
+                this.__master.notify(notification);
+            };
 
             Object.freeze(this);
         };
 
     for (let key of MasterClass.getterNames) {
         proto[key] = function (...args) {
-            return this.__proxy[key](...args);
+            return this.proxy[key](...args);
         };
     }
 
@@ -183,8 +230,8 @@ function createStoreClass(MasterClass) {
 
         ret = function(master) {
             this.__master = master;
-            this.updates = master.updates;
-            this.notifications = master.notifications;
+            this.updateEvents = master.updateEvents;
+            this.notificationEvents = master.notificationEvents;
             Object.freeze(this);
         };
 
@@ -210,8 +257,8 @@ function createControllerClass(MasterClass) {
 
         ret = function(master) {
             this.__master = master;
-            this.updates = master.updates;
-            this.notifications = master.notifications;
+            this.updateEvents = master.updateEvents;
+            this.notificationEvents = master.notificationEvents;
             Object.freeze(this);
         };
 
@@ -221,8 +268,8 @@ function createControllerClass(MasterClass) {
         };
     }
 
-    for (let key of MasterClass.actionNames) {console.log('action', key)
-        proto[key] = function (...args) {console.log(this.__master)
+    for (let key of MasterClass.actionNames) {
+        proto[key] = function (...args) {
             return this.__master[key](...args);
         };
     }
@@ -237,30 +284,36 @@ function buildActionMethod(fn) {
     if (!Functions.isGeneratorFunction(fn)) {
         ret = function (...args) {
             let ret2;
-console.log('juhuuuu')
-            const result = fn.apply(this.__proxy, args);
+
+            const
+                master = this,
+                result = fn.apply(this.proxy, args);
 
             if (result instanceof Promise) {
-                ret2 = new Promise((resolve, reject) => {
-                    result.then(newState => {
-                        if (newState !== undefined && this.__master.__state !== newState) {
-                            this.__master.__state = newState;
-                            resolve(true);
+                ret2 = new Promise(function (resolve, reject) {
+                    result.then(function (newState) {
+                        if (newState !== undefined && master.state !== newState) {
+                            master.state = newState;
+                            setTimeout(() => resolve(true), 0);
                         } else {
-                            resolve(false);
+                            setTimeout(() => resolve(false), 0);
                         }
                     })
                     .catch(err => reject(err));
                 });
             } else if (result !== null) {
-                if (this.__master.__state !== result) {
-                    this.__master.__state = result;
-                    ret2 = Promise.resolve(true);
-                } else {
-                    ret2 = Promise.resolve(false);
+                let stateHasChanged = false;
+
+                if (master.state !== result) {
+                    master.state = result;
+                    stateHasChanged = true;
                 }
+
+                ret2 = new Promise((resolve, reject) => {
+                    setTimeout(() => resolve(stateHasChanged));
+                });
             }
-console.log(111, ret2)
+
             return ret2;
         };
     } else {
