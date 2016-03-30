@@ -7,7 +7,7 @@ import Seq from './Seq';
 const dummyDefaultValue = {};
 
 export default class Config {
-    constructor(data, options) { 
+    constructor(data, options) {
         if (data === null || typeof data !== 'object') {
             throw new TypeError(
                 "[Config.constructor] First argument 'data' has to be an object");
@@ -15,20 +15,20 @@ export default class Config {
             options
             && options.rootPath !== undefined
             && options.rootPath !== null && !Array.isArray(options.rootPath)) {
-            
+
             throw new TypeError(
                 "[Config.constructor] Property 'rootPath' of second argument "
                 + "'config' has to be an array or undefined or null");
         } else if (
-            options 
+            options
             && options.contextName !== undefined
             && options.contextName !== null
             && typeof options.contextName !== 'string') {
-            
+
             throw new TypeError("[Config.constructor] Property 'contextName' of second argument 'config' "
                 + 'has to be a string or undefined or null');
         }
-        
+
         this.__data = data;
         this.__rootPath = (options && options.rootPath) || null;
         this.__contextName = (options && options.contextName) || null;
@@ -36,7 +36,7 @@ export default class Config {
 
     get(path, defaultValue = undefined) {
         let ret;
-    
+
         if (typeof path === 'string') {
             ret = this.__data[path];
         } else if (!Array.isArray(path)) {
@@ -45,28 +45,28 @@ export default class Config {
         } else {
             const
                 pathLength = path.length;
-    
+
             if (pathLength === 0) {
                 ret = this.__data;
             } else if (pathLength === 1) {
                 ret = this.__data[path[0]];
             } else {
                 let parent = this.__data;
-    
+
                 for (let i = 0; i < pathLength; ++i) {
                     if (!parent) {
                         break;
                     } else {
                         parent = parent[path[i]];
-    
+
                         if (i === pathLength - 1) {
                             ret = parent;
                         }
                     }
                 }
             }
-        }       
-        
+        }
+
         if (ret === undefined) {
             if (defaultValue !== undefined) {
                 ret = defaultValue;
@@ -77,32 +77,32 @@ export default class Config {
 
         return ret;
     }
-    
+
     getConstrained(path, defaultValue, rule, validator = null, converter = null) {
         if (typeof rule !== 'string') {
            throw new TypeError(
-               "[Config:getConstrained] Third argument 'rule' must be a string"); 
+               "[Config:getConstrained] Third argument 'rule' must be a string");
         } else if (rule.trim() === '') {
            throw new TypeError(
-               "[Config:getConstrained] Third argument 'rule' must not be blank"); 
+               "[Config:getConstrained] Third argument 'rule' must not be blank");
         } else if (validator !== null && typeof validator !== 'function') {
            throw new TypeError(
                "[Config:getConstrained] Fourth argument 'validator' "
-               + ' must be a function or null'); 
+               + ' must be a function or null');
         } else if (converter !== null && typeof converter !== 'function') {
            throw new TypeError(
                "[Config:getConstrained] Fifth argument 'converter' "
-               + ' must be a function or null'); 
+               + ' must be a function or null');
         }
-        
+
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
-    
+
     getBoolean(path, defaultValue = undefined) {
         const
-            rule = "must be a boolean value or string 'true' or string 'false'" 
+            rule = "must be a boolean value or string 'true' or string 'false'"
                 + defaultValue === null ? ' or null' : '',
-                
+
             validator = value => value === true || value === false || value === 'true' || value === 'false',
             converter = value => value === true || value === 'true';
 
@@ -117,7 +117,7 @@ export default class Config {
 
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
-    
+
     getInteger(path, defaultValue = undefined) {
         const
             rule = "must be a integer number" + defaultValue === null ? ' or null' : '',
@@ -134,30 +134,30 @@ export default class Config {
             converter = value => Strings.asString(value);
 
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
-    };
+    }
 
     getStringOrNull(path) {
         return this.getString(path, null) || null;
-    };
-    
+    }
+
     getTrimmedString(path, defaultValue) {
         return this.getString(path, defaultValue).trim();
-    };
+    }
 
     getTrimmedStringOrNull(path) {
         return this.getTrimmedString(path, null) || null;
-    };
-    
+    }
+
     getNonBlankString(path, defaultValue) {
         const
             rule = 'must be non-blank string',
-            
+
             validator = value => {
                 const type = typeof value;
-                
+
                 return type === 'string' && value.trim() !== '' || type === 'boolean' || type === 'number';
             };
-            
+
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
 
@@ -166,7 +166,7 @@ export default class Config {
             throw new TypeError(
                 "[Config:getStringMatchngRegex] Second argument 'regex' must be a regular expression");
         }
-        
+
         const
             rule = 'must be a string matching regex ' + regex,
 
@@ -175,12 +175,12 @@ export default class Config {
 
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
-    
+
     getFunction(path, defaultValue) {
         const
             rule = 'must be a function',
             validator = value => typeof value === 'function';
-        
+
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
 
@@ -193,7 +193,7 @@ export default class Config {
 
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
-    
+
     getArray(path, defaultValue) {
         const
             rule = 'must be an array or some other non-string sequable',
@@ -202,79 +202,79 @@ export default class Config {
 
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
-  
+
     getConfig(path, defaultValue) {
         const
             rule = 'must be an object or undefined or null',
             validator = value => value && typeof value === 'object',
             converter = value => new Config(value);
-        
+
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
-    
+
     isDefined(path) {
         const value = this.get(path, dummyDefaultValue);
-        
+
         return value !== dummyDefaultValue;
     }
-    
+
     isUndefined(path) {
         const value = this.get(path, dummyDefaultValue);
-        
+
         return value === dummyDefaultValue;
     }
-    
+
     isSomething(path) {
         const value = this.get(path, null);
-        
+
         return (value !== null);
     }
-    
+
     isNothing(path) {
         const value = this.get(path, null);
-        
+
         return (value === null);
     }
-    
+
     isFunction(path) {
         const value = this.get(path, null);
-        
+
         return typeof value === 'function';
     }
-    
+
     isObject(path) {
         const value = this.get(path, null);
-        
+
         return !!value && typeof value === 'object';
     }
-    
+
     isArray(path) {
         const value = this.get(path, null);
-        
+
         return Array.isArray(value);
     }
-    
+
     isScalar(path) {
         const
             value = this.get(path, null),
             type = typeof value;
-        
+
         return (type === 'string' || type === 'number' || type === 'boolean');
     }
-    
+
     isScalarOrNull(path) {
         const
             value = this.get(path, null),
             type = typeof value;
-        
+
         return (value === null || type === 'string' || type === 'number' || type === 'boolean');
     }
-    
+
     isScalarOrNothing(path) {
         const
             value = this.get(path, null),
             type = typeof value;
-            
+
         return (value === undefined || value === null
             || type === 'string' || type === 'number' || type === 'boolean');
     }
@@ -282,36 +282,53 @@ export default class Config {
     ifDefined(path, valueTrue, valueFalse) {
         return this.isDefined(path) ? valueTrue : valueFalse;
     }
-    
+
     ifUndefined(path, valueTrue, valueFalse = null) {
         return this.isUndefined(path) ? valueTrue : valueFalse;
     }
 
     ifSomething(path, valueTrue, valueFalse = null) {
-        return this.isSomething(path) ? valueTrue : valueFalse;    
+        return this.isSomething(path) ? valueTrue : valueFalse;
     }
-    
+
     ifNothing(path, valueTrue, valueFalse = null) {
         return this.isNothing(path) ? valueTrue : valueFalse;
     }
-    
-    keys(keyValidationRegex = null) {
-        if (keyValidationRegex !== null && !(keyValidationRegex instanceof RegExp)) {
+
+    keys(keyValidation = null) {
+        const
+            validatorIsNull = keyValidation === null,
+            validatorIsRegex = !validatorIsNull && keyValidation instanceof RegExp,
+            validatorIsFunction = !validatorIsNull && typeof keyValidation === 'function';
+
+        if (!validatorIsNull && !validatorIsRegex && !validatorIsFunction) {
             throw new TypeError(
-                "[Config:keys] First argument 'keyValidationRegex' must be a regular expression or null");
+                "[Config#keys] First argument 'keyValidation' must either be a "
+                + 'function or a regular expression or null');
         }
-        
+
         const
             ret = Object.keys(this.__data),
-            count = ret.length;
-        
+            count = ret.length,
+
+            validator =
+                validatorIsNull
+                ? null
+                : (validatorIsFunction ? validator : key => key.match(keyValidation));
+
         for (let i = 0; i < count; ++i) {
             const key = ret[i];
-            
+
             if (typeof key !== 'string') {
                 throw this.error(this, null, `Key '${key}' is not a string`);
-            } else if (keyValidationRegex && !key.match(keyValidationRegex)) {
-                throw this.error(this, null, `Key '${key}' does not match regular expression ${keyValidationRegex}`);    
+            } else if (validator && !validator(key)) {
+                if (validatorIsRegex) {
+                    throw error(this, null,
+                        `Key '${key}' does not match regular expression ${keyValidation}`);
+                } else {
+                    throw error(this, null,
+                        `Invalid key '${key}'`);
+                }
             }
         }
 
@@ -344,22 +361,30 @@ function error(config, path, message) {
             config.__contextName
             ? config.__contextName + ': '
             : '',
-    
+
         escapeKey = token =>
             String(token)
                 .replace('\\', '\\\\')
                 .replace('|', '\\|')
                 .replace("'", "\\'");
-        
-    let pathInfo;
-    
-    if (typeof path === 'string') {
-        pathInfo = escapeKey(path);
+
+    let
+        ret,
+        pathInfo;
+
+    if (!path) {
+        ret = new ConfigError(`${messagePrefix}${message}`);
     } else {
-        pathInfo = path.map(escapeKey).join('|');
+        if (typeof path === 'string') {
+            pathInfo = escapeKey(path);
+        } else {
+            pathInfo = path.map(escapeKey).join('|');
+        }
+
+        ret = new ConfigError(`${messagePrefix}Erroneous attribute '${pathInfo}' (${message})`);
     }
 
-    return new ConfigError(`${messagePrefix}Erroneous attribute '${pathInfo}' (${message})`);
+    return ret;
 }
 
 function errorMissingValue(config, path) {
@@ -369,11 +394,11 @@ function errorMissingValue(config, path) {
 // @throws Error
 function getConstrainedValue(config, path, defaultValue = undefined, rule = null, validator = null, converter = null) {
     // Parameters are fine - no need to validate them
-    
+
     let ret;
-    
+
     const value = config.get(path, defaultValue);
-        
+
     if (value === defaultValue) {
         ret = defaultValue;
     } else {
@@ -388,5 +413,5 @@ function getConstrainedValue(config, path, defaultValue = undefined, rule = null
         ret = (converter ? converter(value) : value);
     }
 
-    return ret;        
+    return ret;
 }

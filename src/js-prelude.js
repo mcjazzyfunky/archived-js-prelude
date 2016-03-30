@@ -3,6 +3,7 @@ import Config from './main/Config';
 import ConfigError from './main/ConfigError';
 import EventStream from './main/EventStream';
 import EventSubject from './main/EventSubject';
+import Functions from './main/Functions';
 import Objects from './main/Objects';
 import Seq from './main/Seq';
 import Strings from './main/Strings';
@@ -14,6 +15,7 @@ export {
     ConfigError,
     EventStream,
     EventSubject,
+    Functions,
     Objects,
     Seq,
     Strings,
@@ -26,6 +28,7 @@ const jsprelude = {
     ConfigError,
     EventStream,
     EventSubject,
+    Functions,
     Objects,
     Seq,
     Strings,
