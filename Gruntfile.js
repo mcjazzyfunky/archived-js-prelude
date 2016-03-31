@@ -3,7 +3,7 @@ module.exports = function (grunt) {
         pkg: grunt.file.readJSON('package.json'),
         clean: {
             build: {
-                src: ['build/*', 'dist/js-prelude', 'dist/v<%= pkg.version %>'],
+                src: ['build/*', 'dist/*'],
             }
         },
         babel: {
@@ -43,10 +43,12 @@ module.exports = function (grunt) {
                     source: 'src/main/',
                     destination: 'dist/v<%= pkg.version %>/docs/api',
                     title: 'js-prelude',
+                    undocumentIdentifier: true,
+
                     test: {
                         type: 'mocha',
                         source: './src/specs',
-                        includes: ['\\Spec.js']
+                        includes: ['\\-spec.js']
                     }
                 }
             }

@@ -335,10 +335,6 @@ export default class Config {
         return ret;
     }
 
-    static toString() {
-        return 'Config/class';
-    }
-
     static from(obj) {
         if (obj === null || typeof obj !== 'object') {
             throw new TypeError("[Config.from] First argument 'obj' must be an object");
@@ -349,8 +345,11 @@ export default class Config {
                 : new Config(obj);
     }
 
+    /**
+     * @ignore
+     */
     static toString() {
-        return 'Config:class';
+        return 'Config/class';
     }
 }
 

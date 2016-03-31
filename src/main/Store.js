@@ -2,57 +2,145 @@
 
 import Config from './Config.js';
 import ConfigError from './ConfigError.js';
-import Functions from './Functions.js';
+import EventStream from './EventStream.js';
 import EventSubject from './EventSubject.js';
+import Functions from './Functions.js';
 import Strings from './Strings.js';
 
 const METHOD_NAME_REGEX = /^[a-z][a-zA-Z0-9]*$/;
 
 export default class Store {
-    // updateEvents;
-
-    // notificationEvents;
-
     /**
      * @ignore
      */
     constructor() {
         throw new Error(
-            '[Store.constructor] Constructor is private - '
-            + "please use 'Store.create' or 'Store.createFactory' instead");
+            '[Store.constructor] Store.constructor is not callable - '
+            + "please use 'Store.create', 'Store.createClass' "
+            + "or 'Store.createFactory' instead");
     }
 
-    static create(spec, params) {
-        return Store.createFactory(spec)();
+    get modificationEvents() {
+        return this.__master.modificationEvents;
     }
 
-    static createFactory(spec, params = null) {
+    get notificationEvents() {
+        return this.__master.notificationEvents;
+    }
+
+    createSnapshot() {
+        const ret = Object.create(this);
+const state = this
+        ret.__master = Object.create(ret.__master);
+ret.__master.state = Object.assign({}, state);
+
+
+ret.__master.proxy = new ret.__master.proxy.__proxyClass(ret.__master)
+        Object.freeze(ret);
+
+        return ret;
+
+    }
+
+
+    static createClass(spec) {
         if (spec === null || typeof spec !== 'object') {
             throw new TypeError(
-                "[Store.createFactory] First argument 'spec' "
-                + 'must be an object');
+                "[Store.createClass] First argument 'spec' must be an object");
         }
 
-        const
-            MasterClass = createMasterClass(spec),
-            StoreClass = createStoreClass(MasterClass),
-            ControllerClass = createControllerClass(MasterClass);
-
-        return params => {
+        const storeClass = function (params, actionEvents, disposal = null) {
             if (params !== undefined && params !== null && typeof params !== 'object') {
                 throw new TypeError(
-                    "[Store.createFactory] First argument 'params' of "
-                    + 'store factory invocation has to be an object, null or undefined');
+                    "[Store.constructor] First argument 'params' for "
+                    + 'store contructor has to be an object, null or undefined');
+            } else if (EventStream.isNonSequableStreamable(actionEvents)) {
+                throw new TypeError(
+                    "[Store.constructor] Second argument 'actionEvents' has to be "
+                    + 'a non-sequable streamable');
+            } else if (disposal !== undefined && disposal !== null
+                && !(disposal instanceof Promise)) {
+
+                throw new TypeError(
+                    "[Store.constructor] Third argument 'disposal' has to be "
+                    + 'a promise object, null or undefined');
             }
 
+            this.__master = new storeClass.__masterClass(params);
+
+            EventStream.from(actionEvents)
+                .subscribe(actionEvent => this.__master.dispatch(actionEvent));
+
+            if (disposal) {
+                disposal.then(_ => {
+                    this.__master.dispose();
+                });
+            }
+        };
+
+        storeClass.prototype = Object.create(Store);
+
+        storeClass.__masterClass = createMasterClass(spec);
+        storeClass.__proxyClass = createProxyClass(storeClass.__masterClass);
+        storeClass.__controllerClass = createControllerClass(storeClass.__masterClass);
+
+        const
+            proto = Object.create(Store.prototype);
+
+        for (let key of storeClass.__masterClass.getterNames) {
+            proto[key] = function (...args) {
+                return this.__master[key](...args);
+            };
+        }
+
+        for (let key of storeClass.__masterClass.actionNames) {
+            proto[key] = function (...args) {
+                return this.__master[key](...args);
+            };
+        }
+
+        storeClass.prototype = proto;
+
+        return storeClass;
+    }
+
+    static create(spec, params, actionEvents, disposal = null) {
+        const storeClass = this.createClass(spec);
+
+        return new storeClass(params, actionEvents, disposal);
+    }
+
+    static createSuite(spec, params = null) {
+        return Store.createSuiteFactory(spec)(params);
+    }
+
+    static createSuiteFactory(spec) {
+        const
+            typeOfSpec = typeof spec,
+            specIsFunction = typeOfSpec === 'function';
+
+        if (!(specIsFunction && typeOfSpec.constructor instanceof Store && spec !== Store)
+            && !(spec !== null && typeOfSpec === 'object')) {
+
+            throw new TypeError(
+                "[Store.createFactory] First argument 'spec' must either "
+                + 'be a subclass of Store or an object');
+        }
+
+        const storeClass = specIsFunction ? spec : Store.createClass(spec);
+
+        const factory = params => {
             const
-                master = new MasterClass(params),
-                store = new StoreClass(master),
-                controller = new ControllerClass(master);
+                master = new storeClass.__masterClass(params),
+                store = Object.create(storeClass.prototype),
+                controller = new storeClass.__controllerClass(master);
+
+            store.__master = master;
 
             return {
                 store,
                 controller,
+                storeClass,
 
                 dispatch(actionName, payload) {
                     master.dispatch(actionName, payload);
@@ -63,8 +151,13 @@ export default class Store {
                 }
             };
         };
+
+        factory.storeClass = storeClass;
+
+        return Object.freeze(factory);
     }
 }
+
 
 function createMasterClass(spec) {
     let ret;
@@ -84,7 +177,7 @@ function createMasterClass(spec) {
 
         ret = function (params) {
             const
-                updateSubject = new EventSubject(),
+                modificationSubject = new EventSubject(),
                 notificationSubject = new EventSubject();
 
 
@@ -94,12 +187,12 @@ function createMasterClass(spec) {
 
             this.params = Object.freeze(Object.assign({}, defaultParams, params));
             this.proxy = new ret.Proxy(this);
-            this.updateEvents = updateSubject.asEventStream();
+            this.modificationEvents = modificationSubject.asEventStream();
             this.notificationEvents = notificationSubject.asEventStream();
 
             let
                 state = initialState,
-                sendingUpdateTimeoutId = null;
+                modificationEventTimeoutId = null;
 
             if (typeof initialState === 'function') {
                 state = initialState.call(this.proxy);
@@ -117,16 +210,18 @@ function createMasterClass(spec) {
                 set(newState) {
                     state = newState;
 
-                    if (!sendingUpdateTimeoutId) {
-                        sendingUpdateTimeoutId = setTimeout(() => {
-                            sendingUpdateTimeoutId = null;
+                    if (!modificationEventTimeoutId) {
+                        modificationEventTimeoutId = setTimeout(() => {
+                            modificationEventTimeoutId = null;
 
-                            updateSubject.next({
-                                type: 'update'
+                            modificationSubject.next({
+                                type: 'modification'
                             });
                         }, 0);
                     }
-                }
+                },
+
+                enumerable: true
             });
 
             this.notify = notification => {
@@ -170,27 +265,32 @@ function createMasterClass(spec) {
     return ret;
 }
 
-function createProxyClass(MasterClass) {
+function createProxyClass(masterClass) {
     const
         proto = Object.create(Store.prototype),
 
         ret = function (master) {
             this.__master = master;
+            this.__proxyClass = ret;
             this.params = master.params;
 
 
             Object.defineProperty(this, 'state', {
                 get() {
                     return this.__master.state;
-                }
+                },
+
+                enumerable: true
             });
 
-            Object.defineProperty(this, 'updateEvents', {
+            Object.defineProperty(this, 'modificationEvents', {
                 get() {
                    throw new Error(
-                       "[Store] It's not allowed to access property 'updateEvents' "
+                       "[Store] It's not allowed to access property 'modificationEvents' "
                        + 'from the current context');
-                }
+                },
+
+                enumerable: true
             });
 
             Object.defineProperty(this, 'notificationEvents', {
@@ -198,7 +298,9 @@ function createProxyClass(MasterClass) {
                    throw new Error(
                        "[Store] It's not allowed to access property 'notificationEvents'"
                        + 'from the current context');
-                }
+                },
+
+                enumerable: true
             });
 
             this.notify = notification => {
@@ -214,7 +316,7 @@ function createProxyClass(MasterClass) {
             Object.freeze(this);
         };
 
-    for (let key of MasterClass.getterNames) {
+    for (let key of masterClass.getterNames) {
         proto[key] = function (...args) {
             return this.proxy[key](...args);
         };
@@ -224,51 +326,22 @@ function createProxyClass(MasterClass) {
     return ret;
 }
 
-function createStoreClass(MasterClass) {
+function createControllerClass(masterClass) {
     const
         proto = Object.create(Store.prototype),
 
         ret = function(master) {
             this.__master = master;
-            this.updateEvents = master.updateEvents;
-            this.notificationEvents = master.notificationEvents;
             Object.freeze(this);
         };
 
-    for (let key of MasterClass.getterNames) {
+    for (let key of masterClass.getterNames) {
         proto[key] = function (...args) {
             return this.__master[key](...args);
         };
     }
 
-    for (let key of MasterClass.actionNames) {
-        proto[key] = function (...args) {
-            return this.__master[key](...args);
-        };
-    }
-
-    ret.prototype = proto;
-    return ret;
-}
-
-function createControllerClass(MasterClass) {
-    const
-        proto = {},
-
-        ret = function(master) {
-            this.__master = master;
-            this.updateEvents = master.updateEvents;
-            this.notificationEvents = master.notificationEvents;
-            Object.freeze(this);
-        };
-
-    for (let key of MasterClass.getterNames) {
-        proto[key] = function (...args) {
-            return this.__master[key](...args);
-        };
-    }
-
-    for (let key of MasterClass.actionNames) {
+    for (let key of masterClass.actionNames) {
         proto[key] = function (...args) {
             return this.__master[key](...args);
         };
