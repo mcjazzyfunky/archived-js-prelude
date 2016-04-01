@@ -6,6 +6,8 @@ import EventSubject from './main/EventSubject';
 import Functions from './main/Functions';
 import Objects from './main/Objects';
 import Seq from './main/Seq';
+import Store from './main/Store';
+import Storage from './main/Storage';
 import Strings from './main/Strings';
 import Types from './main/Types'
 
@@ -18,6 +20,8 @@ export {
     Functions,
     Objects,
     Seq,
+    Storage,
+    Store,
     Strings,
     Types
 };
@@ -31,6 +35,8 @@ const jsprelude = {
     Functions,
     Objects,
     Seq,
+    Storage,
+    Store,
     Strings,
     Types
 };

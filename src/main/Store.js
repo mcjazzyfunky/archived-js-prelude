@@ -1,5 +1,44 @@
 'use strict';
 
+import Storage from './Storage.js';
+
+export default class Store {
+    constructor(storage) {
+        if (!(storage instanceof Storage)) {
+            throw new TypeError(
+                "[Store.constructor] First argument 'storeMgr' must must be a StroreMgr");
+        }
+
+
+        this.__mgr = storage;
+
+        this.__modificationEvents = storage.modificationEvents.map(event => ({
+            type: 'modification'
+        }));
+    }
+
+    get modificationEvents() {
+        return this.__mgr.modificationEvents;
+    }
+
+    get notificationEvents() {
+        return this.__mgr.notificationEvents;
+    }
+
+    createSnapshot() {
+        const
+            mgrClone = Object.create(Object.getPrototypeOf(this.__mgr)),
+            snapshot = Object.create(Object.getPrototypeOf(this));
+
+        snapshot.__mgr = mgrClone;
+        mgrClone.__state = this.__mgr.__state;
+        mgrClone.__oldState = undefined;
+
+        return snapshot;
+    }
+}
+
+/*
 import Config from './Config.js';
 import ConfigError from './ConfigError.js';
 import EventStream from './EventStream.js';
@@ -10,9 +49,6 @@ import Strings from './Strings.js';
 const METHOD_NAME_REGEX = /^[a-z][a-zA-Z0-9]*$/;
 
 export default class Store {
-    /**
-     * @ignore
-     */
     constructor() {
         throw new Error(
             '[Store.constructor] Store.constructor is not callable - '
@@ -110,11 +146,11 @@ ret.__master.proxy = new ret.__master.proxy.__proxyClass(ret.__master)
         return new storeClass(params, actionEvents, disposal);
     }
 
-    static createSuite(spec, params = null) {
-        return Store.createSuiteFactory(spec)(params);
+    static createFacets(spec, params = null) {
+        return Store.createFacetsFactory(spec)(params);
     }
 
-    static createSuiteFactory(spec) {
+    static createFacetsFactory(spec) {
         const
             typeOfSpec = typeof spec,
             specIsFunction = typeOfSpec === 'function';
@@ -417,3 +453,4 @@ function adjustError(error, messagePrefix = null) {
 
     return ret;
 }
+*/
