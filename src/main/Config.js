@@ -136,7 +136,23 @@ export default class Config {
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
 
-    getStringOrNull(path) {
+    getNonEmptyString(path) {
+        const
+            rule = 'must be a non-empty string',
+            validator = value => typeof value !== 'object' && Strings.asString(value) !== '';
+
+        return getConstrainedValue(this, path, undefined, rule, validator);
+    }
+
+    getNonBlankString(path) {
+        const
+            rule = 'must be a non-blank string',
+            validator = value => typeof value !== 'object' && Strings.trim(value) !== '';
+
+        return getConstrainedValue(this, path, undefined, rule, validator);
+    }
+
+    getNonEmptyStringOrNull(path) {
         return this.getString(path, null) || null;
     }
 
@@ -144,7 +160,7 @@ export default class Config {
         return this.getString(path, defaultValue).trim();
     }
 
-    getTrimmedStringOrNull(path) {
+    getTrimmedNonEmptyStringOrNull(path) {
         return this.getTrimmedString(path, null) || null;
     }
 
@@ -182,6 +198,36 @@ export default class Config {
             validator = value => typeof value === 'function';
 
         return getConstrainedValue(this, path, defaultValue, rule, validator);
+    }
+
+    getMappedFunction(path, innerFn = null, defaultValue = undefined) {
+        if (innerFn !== null && typeof innerFn !== 'function') {
+            throw new TypeError(
+                "[Config#getMappedFunction] Second parameter 'innerFn' must "
+                + 'either be a function or null');
+        }
+
+        const
+            rule = 'must be a function',
+            validator = value => typeof value === 'function',
+            converter = value => !innerFn ? value : (...args) => value(innerFn(...args));
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
+    }
+
+    getCompositeFunction(path, outerFn = null, defaultValue = undefined) {
+        if (outerFn !== null && typeof outerFn !== 'function') {
+            throw new TypeError(
+                "[Config#getCompositeFunction] Second parameter 'outerFn' must "
+                + 'either be a function or null');
+        }
+
+        const
+            rule = 'must be a function',
+            validator = value => typeof value === 'function',
+            converter = value => !outerFn ? value : (...args) => outerFn(value(...args));
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
 
     getObject(path, defaultValue) {

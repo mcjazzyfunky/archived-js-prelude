@@ -17,7 +17,7 @@ const config = new Config({
     integer1: 42,
     object1: {x: 11, y: 22},
     array1: [1, 2, 3],
-    
+
     nested: {
         string: 'ghi',
         boolean: true,
@@ -29,7 +29,7 @@ const config = new Config({
 
 describe('Testing method Config#getBoolean', () => {
     it('should read boolean values properly', () => {
-            
+
         expect(config.getBoolean('boolean1'))
             .to.eql(true);
 
@@ -41,7 +41,7 @@ describe('Testing method Config#getBoolean', () => {
 
 describe('Testing method Config#getBoolean', () => {
     it('should read boolean values properly', () => {
-            
+
         expect(config.getBoolean('boolean1'))
             .to.eql(true);
 
@@ -107,10 +107,10 @@ describe('Testing method Config#getString', () => {
 
         expect(config.getString('string2'))
             .to.eql('');
-                
+
         expect(config.getString('string3'))
             .to.eql(' ');
-            
+
         expect(config.getString('string4'))
             .to.eql(' def ');
 
@@ -124,26 +124,26 @@ describe('Testing method Config#getString', () => {
 
 
 /**
- * @test {Config#getStringOrNull}
+ * @test {Config#getNonEmptyStringOrNull}
  */
-describe('Testing method Config#getStringOrNull', () => {
+describe('Testing method Config#getNonEmptyStringOrNull', () => {
     it('should read strings properly and handle null values correctly', () => {
-        expect(config.getStringOrNull('string1'))
+        expect(config.getNonEmptyStringOrNull('string1'))
             .to.eql('abc');
 
-        expect(config.getStringOrNull('string2'))
+        expect(config.getNonEmptyStringOrNull('string2'))
             .to.eql(null);
-                
-        expect(config.getStringOrNull('string3'))
+
+        expect(config.getNonEmptyStringOrNull('string3'))
             .to.eql(' ');
-            
-        expect(config.getStringOrNull('string4'))
+
+        expect(config.getNonEmptyStringOrNull('string4'))
             .to.eql(' def ');
 
-        expect(config.getStringOrNull(['nested', 'string']))
+        expect(config.getNonEmptyStringOrNull(['nested', 'string']))
             .to.eql('ghi');
 
-        expect(config.getStringOrNull('unknown'))
+        expect(config.getNonEmptyStringOrNull('unknown'))
             .to.eql(null);
     });
 });

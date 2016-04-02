@@ -83,7 +83,12 @@ export default class Storage {
         return this.__controller;
     }
 
-    notify(notification) {
+    notify(...args) {
+        const notification =
+            args.length > 1
+            ? args
+            : args[0];
+
         if (Types.isSomething(notification)) {
             setTimeout(() => {
                 this.__notificationSubject.next(notification);
