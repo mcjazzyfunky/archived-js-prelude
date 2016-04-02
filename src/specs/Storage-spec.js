@@ -45,6 +45,15 @@ class Storage1 extends Storage {
         });
     }
 
+    *doSomethingAsync() {
+        const
+            a = yield Promise.resolve(21),
+            b = yield Promise.resolve(11),
+            c = yield Promise.resolve(10);
+
+        return a + b + c;
+    }
+
     reset() {
         this.state = this.initialState;
     }
@@ -57,7 +66,6 @@ const
     ctrl1 = storage1.controller;
 
 store1.modificationEvents.subscribe(event => {
-    console.log('>>>> Storing modification event')
     modificationEvents.push(event);
 });
 
@@ -82,7 +90,7 @@ describe("Testing class StoreManager", _ => {
         it('should create new store without additional initialization parameters', () => {
 
             return ctrl1.setParam1(333)
-                .then(_ => {console.log(modificationEvents);
+                .then(_ => {
                     expect(modificationEvents.length).to.eql(1);
                     expect(notificationEvents).to.eql(['Calling setParam1']);
                     expect(ctrl1.getParam1()).to.eql(333);
@@ -105,6 +113,15 @@ describe("Testing class StoreManager", _ => {
                     .then(_ => {
                         expect(snapshot.getParam1()).to.eql(oldParam1);
                     })
+            );
+        });
+    });
+
+    describe('Testing method handling', () => {
+        it('should handle generator-based asynchronous methods', () => {
+            return (
+                ctrl1.doSomethingAsync()
+                    .then(result => expect(result).to.eql(42))
             );
         });
     });

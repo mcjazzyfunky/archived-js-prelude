@@ -5,7 +5,7 @@ import Store from './Store';
 import EventSubject from './EventSubject';
 import Types from './Types';
 
-const storeHandlerMeta = new WeakMap();
+const storageMeta = new WeakMap();
 const GETTER_NAME_REGEX = /^(get|find)[A-Z]|^[a-z]*s[A-Z]/;
 
 export default class Storage {
@@ -94,23 +94,23 @@ export default class Storage {
 
 Object.defineProperty(Storage, 'storeClass', {
     get() {
-        let meta = storeHandlerMeta.get(this);
+        let meta = storageMeta.get(this);
 
         if (!meta) {
             meta = determineStorageMeta(this);
-            storeHandlerMeta.set(this, meta);
+            storageMeta.set(this, meta);
         }
 
         return meta.storeClass;
     }
 });
 
-function determineStorageMeta(storeHandlerClass) {
+function determineStorageMeta(storageClass) {
     const
         getterNames = new Set(),
         actionNames = new Set();
 
-    let prototype = storeHandlerClass.prototype;
+    let prototype = storageClass.prototype;
 
     while (prototype !== Storage.prototype) {
         for (let propName of Object.getOwnPropertyNames(prototype)) {
@@ -118,7 +118,7 @@ function determineStorageMeta(storeHandlerClass) {
                 && propName !== 'constructor'
                 && propName[0] !== '_'
                 && typeof prototype[propName] === 'function'
-                && !Storage.hasOwnProperty(propName)) {
+                && Storage[propName] === undefined) {
 
                 if (propName.match(GETTER_NAME_REGEX)) {
                     getterNames.add(propName);
@@ -132,8 +132,8 @@ function determineStorageMeta(storeHandlerClass) {
     }
 
     const
-        storeClass = createStoreClass(storeHandlerClass, getterNames),
-        controllerClass = createControllerClass(storeHandlerClass, storeClass, actionNames);
+        storeClass = createStoreClass(storageClass, getterNames),
+        controllerClass = createControllerClass(storageClass, storeClass, actionNames);
 
     return {
         getterNames,
@@ -175,9 +175,9 @@ function createControllerClass(storageClass, storeClass, actionNames) {
     controllerClass.prototype = proto;
 
     for (let actionName of actionNames) {
-        let method = buildControllerActionMethod(function (...args) {
-            return storageClass.prototype[actionName].apply(this, args);
-        });
+        let method = buildControllerActionMethod(
+            storageClass.prototype[actionName]
+        );
 
         proto[actionName] = method;
     }
@@ -252,7 +252,36 @@ function buildControllerActionMethod(fn) {
             return ret2;
         };
     } else {
-        throw new Error("Not implemented!"); // TODO: Implement
+        return (...args) => {
+            const
+                handleNext = (generator, seed, resolve, reject) => {
+                    try {
+                        const
+                            {value, done} = generator.next(seed),
+                            valueIsPromise = value instanceof Promise;
+
+                        if (done) {
+                            if (valueIsPromise) {
+                                value.then(resolve, reject);
+                            } else {
+                                resolve(value);
+                            }
+                        } else {
+                            if (valueIsPromise) {
+                                value.then(result => handleNext(generator, result, resolve, reject), reject);
+                            } else {
+                                handleNext(generator, value, resolve, reject);
+                            }
+                        }
+                    } catch (err) {
+                        generator.return();
+                        reject(err);
+                    }
+                };
+
+            return new Promise((resolve, reject) =>
+                handleNext(fn(...args), undefined, resolve, reject));
+        };
     }
 
     return ret;
