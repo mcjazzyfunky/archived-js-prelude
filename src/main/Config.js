@@ -161,7 +161,7 @@ export default class Config {
         return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
 
-    getStringMatchingRegex(regex, path, defaultValue) {
+    getStringMatchingRegex(path, regex, defaultValue) {
         if (!(regex instanceof RegExp)) {
             throw new TypeError(
                 "[Config:getStringMatchngRegex] Second argument 'regex' must be a regular expression");

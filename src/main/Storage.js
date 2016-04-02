@@ -8,7 +8,7 @@ import Types from './Types';
 const storeHandlerMeta = new WeakMap();
 const GETTER_NAME_REGEX = /^(get|find)[A-Z]|^[a-z]*s[A-Z]/;
 
-export default class StoreManager {
+export default class Storage {
     constructor(params = null) {
         this.__meta = determineStorageMeta(Object.getPrototypeOf(this).constructor);
         this.__params = params === undefined ? null : params;
@@ -22,12 +22,12 @@ export default class StoreManager {
         this.dispatcher = createDispatcher(this);
         this.disposer = createDisposer(this);
 
-        this.__oldState = undefined;
-        this.__modificationTransmissionTimeoutId = 0;
-        this.__state = this.initialState;
+        defineReadWriteProperty(this, '__state', this.initialState);
+        defineReadWriteProperty(this, '__oldState', undefined);
+        defineReadWriteProperty(this, '__modificationTransmissionTimeoutId', null);
 
-      //  Object.freeze(this.__params);
-      //  Object.freeze(this);
+        Object.freeze(this.__params);
+        Object.freeze(this);
     }
 
     get initialState() {
@@ -42,7 +42,7 @@ export default class StoreManager {
         return this.__state;
     }
 
-    set state(newState) {console.log(">>>>>>>>>>>> setting state")
+    set state(newState) {
         if (newState === undefined) {
             throw new TypeError(
                 "[Storage#set-state] First argument 'newState' must not be  undefined");
@@ -50,13 +50,13 @@ export default class StoreManager {
 
         this.__state = newState;
 
-        if (this.__modificationTransmissionTimeoutId !== "null") {
+        if (this.__modificationTransmissionTimeoutId === null) {
             this.__modificationTransmissionTimeoutId = setTimeout(() => {
                 const oldState = this.__oldState;
 
                 this.__oldState = newState;
                 this.__modificationTransmissionTimeoutId = null;
-console.log('Sending modificatin event....')
+
                 this.__modificationSubject.next({
                     type: 'modification',
                     newState,
@@ -90,17 +90,9 @@ console.log('Sending modificatin event....')
             });
         }
     }
-
-    dispatch(actionName, payload = null) {
-        return this.__dispatcher(actionName, payload);
-    }
-
-    dispose() {
-        return this.__disposer();
-    }
 }
 
-Object.defineProperty(StoreManager, 'storeClass', {
+Object.defineProperty(Storage, 'storeClass', {
     get() {
         let meta = storeHandlerMeta.get(this);
 
@@ -120,13 +112,13 @@ function determineStorageMeta(storeHandlerClass) {
 
     let prototype = storeHandlerClass.prototype;
 
-    while (prototype !== StoreManager.prototype) {
+    while (prototype !== Storage.prototype) {
         for (let propName of Object.getOwnPropertyNames(prototype)) {
             if (typeof propName === 'string'
                 && propName !== 'constructor'
                 && propName[0] !== '_'
                 && typeof prototype[propName] === 'function'
-                && !StoreManager.hasOwnProperty(propName)) {
+                && !Storage.hasOwnProperty(propName)) {
 
                 if (propName.match(GETTER_NAME_REGEX)) {
                     getterNames.add(propName);
@@ -196,7 +188,7 @@ function createControllerClass(storageClass, storeClass, actionNames) {
 function createDispatcher(storage) {
     return (actionName, payload) => {
         if (typeof actionName !== 'string' || actionName === '') {
-            throw new TypeError(`[StoreManager#dispatch] First argument 'actionName' must be a non-empty string`);
+            throw new TypeError(`[Storage#dispatch] First argument 'actionName' must be a non-empty string`);
         }
 
         const actionNames = storage.__meta.actionNames;
@@ -266,12 +258,16 @@ function buildControllerActionMethod(fn) {
     return ret;
 }
 
+function defineReadWriteProperty(obj, propertyName, initialValue) {
+    let value = initialValue;
 
+    Object.defineProperty(obj, propertyName, {
+        get() {
+            return value;
+        },
 
-
-
-
-
-
-
-
+        set(newValue) {
+            value = newValue;
+        }
+    });
+}

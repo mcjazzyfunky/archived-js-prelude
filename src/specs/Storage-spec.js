@@ -103,8 +103,7 @@ describe("Testing class StoreManager", _ => {
                     .then(_ => snapshot = store1.createSnapshot())
                     .then(_ => ctrl1.setParam1(234))
                     .then(_ => {
-                       expect(ctrl1.getParam1()).to.eql(oldParam1)
-             //           expect(snapshot.getParam1()).to.eql(oldParam1);
+                        expect(snapshot.getParam1()).to.eql(oldParam1);
                     })
             );
         });
