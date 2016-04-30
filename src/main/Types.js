@@ -80,25 +80,45 @@ export default class Types {
             } else if (typeSpec === undefined) {
                 ret = obj === undefined;
             } else if (typeof typeSpec === 'string') {
-                if (typeSpec === 'string') {
-                    ret = type === 'string';
-                } else if (typeSpec === 'boolean') {
-                    ret = type === 'boolean';
-                } else if (typeSpec === 'number') {
-                    ret = type === 'number';
-                } else if (typeSpec === 'function') {
-                    ret = type === 'function';
-                } else if (typeSpec === 'scalar') {
-                    ret = type == 'string'
-                        || type === 'number' || type === 'boolean';
-                } else if (type === 'numeric') {
-                    ret = !isNaN(obj) && type !== 'boolean';
-                } else if (typeSpec === 'array') {
-                    ret = Array.isArray(obj);
-                } else {
-                    throw new TypeError(
-                        "[Types.isOfType] Do not know what type '"
-                        + typeSpec + "' shall be");
+                switch (typeSpec) {
+                    case 'boolean':
+                        ret = type === 'boolean';
+                        break;
+
+                    case 'number':
+                        ret = type === 'number';
+                        break;
+
+                    case 'string':
+                        ret = type === 'string';
+                        break;
+
+                    case 'function':
+                        ret = type === 'function';
+                        break;
+
+                    case 'object':
+                        ret = obj !== null && type === 'object';
+                        break;
+
+                    case 'symbol':
+                        ret = type === 'symbol';
+                        break;
+
+                    case 'scalar':
+                        ret = type == 'string'
+                            || type === 'number' || type === 'boolean';
+
+                        break;
+
+                    case 'array':
+                        ret = Array.isArray(obj);
+                        break;
+
+                    default:
+                        throw new TypeError(
+                            "[Types.isOfType] Do not know what type '"
+                            + typeSpec + "' shall be");
                 }
             } else if (typeof typeSpec === 'function') {
                 ret = obj instanceof typeSpec;
