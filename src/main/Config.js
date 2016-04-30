@@ -3,6 +3,7 @@
 import ConfigError from './ConfigError';
 import Strings from './Strings';
 import Seq from './Seq';
+import Types from './Types';
 
 const dummyDefaultValue = {};
 
@@ -96,6 +97,16 @@ export default class Config {
         }
 
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
+    }
+
+    getOfType(path, typeSpec, defaultValue = undefined) {
+        const
+            rule = 'must be of valid type'
+                + defaultValue === null ? ' or null' : '',
+
+            validator = value => Types.isOfType(value, typeSpec);
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator);
     }
 
     getBoolean(path, defaultValue = undefined) {

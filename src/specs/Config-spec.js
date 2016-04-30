@@ -27,6 +27,16 @@ const config = new Config({
     }
 });
 
+describe('Testing method Config#getOfType', () => {
+    it('should check type values properly', () => {
+        expect(config.getOfType('boolean1', ['number', 'boolean']))
+            .to.eql(true);
+
+        expect(config.getOfType('number1', ['number', 'boolean']))
+            .to.eql(123.45);
+    });
+});
+
 describe('Testing method Config#getBoolean', () => {
     it('should read boolean values properly', () => {
 

@@ -9,9 +9,9 @@ export default class Types {
      */
     construct() {
         throw '[Types] Class is not instantiable';
-    } 
-    
-    
+    }
+
+
     /**
      * Checks for being something else than undefined or null.
      *
@@ -57,7 +57,60 @@ export default class Types {
     static isNothing(obj) {
         return obj === null || obj === undefined;
     }
-    
+
+    static isOfType(obj, typeSpec) {
+        let ret;
+
+        if (Array.isArray(typeSpec)) {
+            for (let typeSpecItem of typeSpec) {
+                if (Types.isOfType(obj, typeSpecItem)) {
+                    ret = true;
+                    break;
+                }
+            }
+            
+            if (ret !== true) {
+                ret = false;
+            }
+        } else {
+            const type = typeof obj;
+
+            if (typeSpec === null) {
+                ret = obj === null;
+            } else if (typeSpec === undefined) {
+                ret = obj === undefined;
+            } else if (typeof typeSpec === 'string') {
+                if (typeSpec === 'string') {
+                    ret = type === 'string';
+                } else if (typeSpec === 'boolean') {
+                    ret = type === 'boolean';
+                } else if (typeSpec === 'number') {
+                    ret = type === 'number';
+                } else if (typeSpec === 'scalar') {
+                    ret = type == 'string'
+                        || type === 'number' || type === 'boolean';
+                } else if (type === 'numeric') {
+                    ret = !isNaN(obj) && type !== 'boolean';
+                } else if (typeSpec === 'array') {
+                    ret = Array.isArray(obj);
+                } else {
+                    throw new TypeError(
+                        "[Types.isOfType] Do not know what type '"
+                        + typeSpec + "' shall be");
+                }
+            } else if (typeof typeSpec === 'function') {
+                ret = obj instanceof typeSpec;
+            } else {
+                throw new TypeError(
+                    "[Types.isOfType] Second argument 'typeSpec' must either "
+                    + 'be a constructor function or a string or an array of'
+                    + 'type specs');
+            }
+        }
+
+        return ret;
+    }
+
     /**
      * Will return a proper string representation for debugging purposes.
      *
