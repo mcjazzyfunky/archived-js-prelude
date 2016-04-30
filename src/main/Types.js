@@ -68,7 +68,7 @@ export default class Types {
                     break;
                 }
             }
-            
+
             if (ret !== true) {
                 ret = false;
             }
@@ -86,6 +86,8 @@ export default class Types {
                     ret = type === 'boolean';
                 } else if (typeSpec === 'number') {
                     ret = type === 'number';
+                } else if (typeSpec === 'function') {
+                    ret = type === 'function';
                 } else if (typeSpec === 'scalar') {
                     ret = type == 'string'
                         || type === 'number' || type === 'boolean';
