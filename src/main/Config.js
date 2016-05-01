@@ -460,9 +460,9 @@ function getConstrainedValue(config, path, defaultValue = undefined, rule = null
     } else {
         if (validator && !validator(value)) {
             if (rule) {
-                throw error(this, path, "Invalid value - " + rule + "!");
+                throw error(config, path, "Invalid value - " + rule + "!");
             } else {
-                throw error(this, path, 'Invalid value');
+                throw error(config, path, 'Invalid value');
             }
         }
 
