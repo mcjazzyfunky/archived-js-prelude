@@ -124,7 +124,9 @@ class Transformer {
 
                 const newObj = Transformer.transform(obj[key], value);
 
-                if (newObj !== obj[key]) {
+                if (newObj === obj[key]) {
+                    ret = obj;
+                } else {
                     if (Array.isArray(obj) && (isNaN(key) || key.toString() !== '' + parseInt(key, 10))) {
                         console.error('Illegal transformation plan: ', plan);
                         throw 'Illegal array key: ' + key;
@@ -137,10 +139,6 @@ class Transformer {
         }
 
         return ret;
-    }
-
-    static __isImmutable(obj) {
-        return (obj === null || typeof obj !== 'object' || typeof Immutable === 'object' && obj instanceof Immutable.Collection);
     }
 
     static __$set(obj, value) {
@@ -323,15 +321,7 @@ class Transformer {
         var ret;
 
         if (typeof f === 'function') {
-            if (!Transformer.__isImmutable(obj)) {
-                throw 'Modifier $update must can only be applied on an immutable';
-            }
-
             ret = f(obj);
-
-            if (!Transformer.__isImmutable(ret)) {
-                throw 'Modifier $update must return something immutable';
-            }
         } else {
             ret = Transformer.transform(obj, f);
         }
