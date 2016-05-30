@@ -260,6 +260,37 @@ export default class Config {
         return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
     }
 
+    getSeq(path, defaultValue) {
+        const
+            rule = 'must be iterable',
+            validator = value => Seq.isSeqable(value),
+            converter = value => Seq.from(value);
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
+    }
+
+    getSeqOfConfigs(path, defaultValue) {
+        const
+            rule = 'must be iterable',
+
+            validator = value => Seq.isSeqable(value),
+
+            converter = value => Seq.from(value).map((obj, index) => {
+                if (obj === null || typeof obj !== 'object') {
+                    const fullPath =
+                        Array.isArray(path)
+                        ? path.slice().push(index)
+                        : [path, index];
+
+                    throw error(this, fullPath, 'must be an object');
+                }
+
+                return inheritConfig(this, obj);
+            });
+
+        return getConstrainedValue(this, path, defaultValue, rule, validator, converter);
+    }
+
     getConfig(path, defaultValue) {
         const
             rule = 'must be an object or undefined or null',
@@ -334,6 +365,12 @@ export default class Config {
 
         return (value === undefined || value === null
             || type === 'string' || type === 'number' || type === 'boolean');
+    }
+
+    isIterable(path) {
+        const value = this.get(path, null);
+
+        return value !== null && Seq.isSeqable(value);
     }
 
     ifDefined(path, valueTrue, valueFalse) {
@@ -470,4 +507,8 @@ function getConstrainedValue(config, path, defaultValue = undefined, rule = null
     }
 
     return ret;
+}
+
+function inheritConfig(config, data) {
+    return new Config(data); // TODO
 }
